@@ -95,6 +95,18 @@ export default function App() {
         setUraianTugas(updatedU);
       }
       saveAllToCache(updatedP, updatedU, prelist1308, prelist1376, nowStr);
+    } else if (result.type === 'prelist_multi') {
+      let p1308 = prelist1308;
+      let p1376 = prelist1376;
+      if (result.prelist1308 && result.prelist1308.length > 0) {
+        p1308 = result.prelist1308;
+        setPrelist1308(p1308);
+      }
+      if (result.prelist1376 && result.prelist1376.length > 0) {
+        p1376 = result.prelist1376;
+        setPrelist1376(p1376);
+      }
+      saveAllToCache(pengawalanData, uraianTugas, p1308, p1376, nowStr);
     } else if (result.type === 'prelist') {
       if (result.targetKab === '1376') {
         setPrelist1376(result.data);
@@ -285,6 +297,7 @@ export default function App() {
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onDataUpdated={handleDataUpdated}
+        onOpenGasModal={() => setIsGasOpen(true)}
       />
 
       <GasModal 

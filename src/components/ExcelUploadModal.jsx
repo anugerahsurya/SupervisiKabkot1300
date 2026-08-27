@@ -7,11 +7,13 @@ import {
   AlertTriangle, 
   Info, 
   Loader2,
-  RefreshCw
+  Database,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
-import { parseExcelFile } from '../services/excelService';
+import { parseExcelFiles } from '../services/excelService';
 
-export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated }) {
+export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated, onOpenGasModal }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
@@ -21,10 +23,13 @@ export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated }) {
 
   const handleFiles = async (fileList) => {
     if (!fileList || fileList.length === 0) return;
-    const file = fileList[0];
+    
+    // Filter Excel files
+    const validFiles = Array.from(fileList).filter(f => 
+      f.name.endsWith('.xlsx') || f.name.endsWith('.xls')
+    );
 
-    // Check extension
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+    if (validFiles.length === 0) {
       setErrorMsg('Harap pilih file Excel dengan format .xlsx atau .xls');
       return;
     }
@@ -34,7 +39,8 @@ export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated }) {
     setUploadResult(null);
 
     try {
-      const result = await parseExcelFile(file);
+      // Parse files with ultra-fast row streaming and auto-filtering for 1308 & 1376
+      const result = await parseExcelFiles(validFiles);
       setUploadResult(result);
       onDataUpdated(result);
     } catch (err) {
@@ -75,8 +81,8 @@ export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated }) {
               <UploadCloud size={20} className="text-primary" />
             </div>
             <div>
-              <h3 className="modal-title">Perbarui Data via File Excel</h3>
-              <p className="modal-subtitle">Unggah file Excel hasil supervisi atau rekap fasih terbaru</p>
+              <h3 className="modal-title">Perbarui Data Excel (Auto-Filter 1308 & 1376)</h3>
+              <p className="modal-subtitle">Unggah 1 atau 2 file SQL Lab UMKM / 13 Pengawalan sekaligus</p>
             </div>
           </div>
 
@@ -96,17 +102,17 @@ export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated }) {
           <div className="upload-instructions-box">
             <div className="inst-title-row">
               <Info size={16} className="text-primary" />
-              <span className="font-semibold text-main">Tipe File yang Didukung:</span>
+              <span className="font-semibold text-main">Otomatisasi Penyaringan Wilayah:</span>
             </div>
             <ul className="inst-list">
               <li>
-                <strong>13 Pengawalan Cakupan & Kualitas SE2026.xlsx</strong> — Memperbarui metrik KPI, anomali, tim, strategi, & uraian tugas 1308 dan 1376.
+                <strong>Mendukung Multi-File:</strong> Anda dapat memilih atau drag & drop <strong>kedua file SQL Lab</strong> (Part 1 & Part 2) secara bersamaan.
               </li>
               <li>
-                <strong>Rekap_Prelist_SubSLS_Kab1308_*.xlsx</strong> — Memperbarui data tabel Sub SLS Kabupaten Lima Puluh Kota (1308).
+                <strong>Filter Otomatis Cepat:</strong> Web secara instan hanya mengekstrak <strong>Kab. Lima Puluh Kota (1308)</strong> dan <strong>Kota Payakumbuh (1376)</strong> tanpa beban memori, dan mengabaikan baris kab/kota lain.
               </li>
               <li>
-                <strong>Rekap_Prelist_SubSLS_Kab1376_*.xlsx</strong> — Memperbarui data tabel Sub SLS Kota Payakumbuh (1376).
+                <strong>Kolom Lengkap:</strong> Status <em>Submit</em>, <em>Draft</em>, dan <em>Open</em> akan terbarui secara otomatis dan tersimpan di memori lokal peramban.
               </li>
             </ul>
           </div>
@@ -121,7 +127,7 @@ export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated }) {
             {isLoading ? (
               <div className="dropzone-loading">
                 <Loader2 size={36} className="animate-spin text-primary" />
-                <p className="loading-text">Sedang memproses dan membaca lembar kerja Excel...</p>
+                <p className="loading-text">Sedang memproses dan menyaring data 1308 & 1376 secara instan...</p>
               </div>
             ) : (
               <div className="dropzone-idle">
@@ -129,18 +135,45 @@ export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated }) {
                   <FileSpreadsheet size={40} className="text-primary" />
                 </div>
                 <h4 className="dropzone-title">Tarik & Letakkan File Excel di Sini</h4>
-                <p className="dropzone-sub">atau klik tombol di bawah untuk memilih file dari komputer</p>
+                <p className="dropzone-sub">Pilih satu atau kedua file SQL Lab UMKM / Rekap Prelist (.xlsx)</p>
 
                 <label className="btn btn-primary btn-sm dropzone-btn">
-                  <span>Pilih File Excel</span>
+                  <span>Pilih File Excel (Bisa Multi-File)</span>
                   <input 
                     type="file" 
                     accept=".xlsx, .xls"
+                    multiple
                     onChange={handleFileInputChange}
                     style={{ display: 'none' }}
                   />
                 </label>
               </div>
+            )}
+          </div>
+
+          {/* Spreadsheet Option Banner */}
+          <div className="info-callout flex-between" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <span className="callout-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Database size={15} className="text-primary" />
+                Opsi Sinkronisasi Google Spreadsheet
+              </span>
+              <span className="callout-text font-sm">
+                Kelola data lewat Google Sheets dan update data web dengan 1-klik.
+              </span>
+            </div>
+            {onOpenGasModal && (
+              <button 
+                type="button" 
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  onClose();
+                  onOpenGasModal();
+                }}
+              >
+                <span>Buka Google Sheets</span>
+                <ArrowRight size={14} />
+              </button>
             )}
           </div>
 
@@ -157,11 +190,18 @@ export default function ExcelUploadModal({ isOpen, onClose, onDataUpdated }) {
             <div className="alert-box alert-success">
               <CheckCircle2 size={18} />
               <div>
-                <strong>Pembaruan Berhasil!</strong>
+                <strong>Pembaruan Data Berhasil!</strong>
                 <p className="success-detail-p">
-                  File <strong>{uploadResult.filename}</strong> berhasil diproses. 
-                  {uploadResult.type === 'pengawalan' && ' Data Pengawalan 1308 & 1376 serta uraian tugas telah diperbarui.'}
-                  {uploadResult.type === 'prelist' && ` Sebanyak ${uploadResult.data.length.toLocaleString('id-ID')} baris Sub SLS wilayah ${uploadResult.targetKab === '1376' ? 'Kota Payakumbuh' : 'Kab. Lima Puluh Kota'} telah diperbarui.`}
+                  {uploadResult.type === 'pengawalan' && 'Data 13 Pengawalan & Uraian Tugas berhasil diperbarui.'}
+                  {uploadResult.type === 'prelist_multi' && (
+                    <>
+                      File <strong>{uploadResult.filenames.join(', ')}</strong> berhasil diproses.
+                      <br />
+                      • <strong>{uploadResult.count1308.toLocaleString('id-ID')} Sub SLS</strong> Kab. Lima Puluh Kota (1308)
+                      <br />
+                      • <strong>{uploadResult.count1376.toLocaleString('id-ID')} Sub SLS</strong> Kota Payakumbuh (1376)
+                    </>
+                  )}
                 </p>
               </div>
             </div>
