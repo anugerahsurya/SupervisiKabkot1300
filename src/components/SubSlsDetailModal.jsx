@@ -11,9 +11,21 @@ import {
   User,
   FileSpreadsheet
 } from 'lucide-react';
+import { masterWilayahMap } from '../data/masterWilayahInfo';
 
 export default function SubSlsDetailModal({ data, onClose }) {
   if (!data) return null;
+
+  const master = masterWilayahMap[data.kdSubSls] || {};
+  const nmKab = (data.nmKab && data.nmKab.trim() !== '') ? data.nmKab : (master.nmKab || (data.kdSubSls?.startsWith('1376') ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota'));
+  const kdKab = data.kdKab || master.kdKab || (data.kdSubSls?.startsWith('1376') ? '1376' : '1308');
+  const kdKec = data.kdKec || master.kdKec || data.kdSubSls?.slice(0, 7);
+  const nmKec = (data.nmKec && data.nmKec.trim() !== '') ? data.nmKec : (master.nmKec || `Kecamatan [${data.kdSubSls?.slice(4, 7)}]`);
+  const kdDesa = data.kdDesa || master.kdDesa || data.kdSubSls?.slice(0, 10);
+  const nmDesa = (data.nmDesa && data.nmDesa.trim() !== '') ? data.nmDesa : (master.nmDesa || `Desa [${data.kdSubSls?.slice(7, 10)}]`);
+  const nmSubSls = (data.nmSubSls && data.nmSubSls.trim() !== '' && !data.nmSubSls.startsWith('Sub SLS [')) 
+    ? data.nmSubSls 
+    : (master.nmSubSls || data.nmSubSls || `Sub SLS [${data.kdSubSls?.slice(-2)}]`);
 
   const totBeban = Number(data.totBeban || 0);
   const totSubmit = Number(data.totSubmit || 0);
@@ -96,23 +108,23 @@ export default function SubSlsDetailModal({ data, onClose }) {
             <div className="detail-grid-5">
               <div className="detail-box">
                 <span className="detail-box-label">Kabupaten / Kota</span>
-                <span className="detail-box-value">{data.nmKab} ({data.kdKab})</span>
+                <span className="detail-box-value">{nmKab} ({kdKab})</span>
               </div>
 
               <div className="detail-box">
                 <span className="detail-box-label">Kecamatan</span>
-                <span className="detail-box-value">{data.nmKec} ({data.kdKec})</span>
+                <span className="detail-box-value">{nmKec} ({kdKec})</span>
               </div>
 
               <div className="detail-box">
                 <span className="detail-box-label">Desa / Nagari / Kelurahan</span>
-                <span className="detail-box-value">{data.nmDesa} ({data.kdDesa})</span>
+                <span className="detail-box-value">{nmDesa} ({kdDesa})</span>
               </div>
 
               <div className="detail-box">
                 <span className="detail-box-label">Kode & Nama SLS / Sub SLS</span>
-                <span className="detail-box-value">{data.nmSubSls}</span>
-                <span className="detail-box-code">{data.kdSubSls}</span>
+                <span className="detail-box-value">{nmSubSls}</span>
+                <span className="detail-box-code">{kdSubSls || data.kdSubSls}</span>
               </div>
 
               <div className="detail-box highlight-user-box">

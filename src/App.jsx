@@ -12,6 +12,7 @@ import {
   initialPrelist1308, 
   initialPrelist1376 
 } from './data/initialData';
+import { enrichPrelistWithMaster } from './data/masterWilayahInfo';
 import { exportToExcel } from './services/excelService';
 import { getGasUrl, fetchDatasetsFromGas } from './services/gasService';
 import './App.css';
@@ -45,7 +46,7 @@ export default function App() {
   // Sub-section tab inside Wilayah: 'all' | 'pengawalan' | 'uraian' | 'prelist'
   const [activeSection, setActiveSection] = useState('all');
 
-  // Datasets with localStorage caching
+  // Datasets with localStorage caching and automatic Master Wilayah enrichment
   const [pengawalanData, setPengawalanData] = useState(() => {
     const cached = localStorage.getItem('se2026_pengawalan_data');
     if (cached) {
@@ -67,10 +68,10 @@ export default function App() {
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return enrichPrelistWithMaster(parsed, '1308');
       } catch (e) {}
     }
-    return initialPrelist1308;
+    return enrichPrelistWithMaster(initialPrelist1308, '1308');
   });
 
   const [prelist1376, setPrelist1376] = useState(() => {
@@ -78,10 +79,10 @@ export default function App() {
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return enrichPrelistWithMaster(parsed, '1376');
       } catch (e) {}
     }
-    return initialPrelist1376;
+    return enrichPrelistWithMaster(initialPrelist1376, '1376');
   });
 
   const [lastUpdated, setLastUpdated] = useState(() => {
@@ -122,11 +123,11 @@ export default function App() {
       setUraianTugas(updatedU);
     }
     if (cloudData.prelist1308 && cloudData.prelist1308.length > 0) {
-      updated1308 = cloudData.prelist1308;
+      updated1308 = enrichPrelistWithMaster(cloudData.prelist1308, '1308');
       setPrelist1308(updated1308);
     }
     if (cloudData.prelist1376 && cloudData.prelist1376.length > 0) {
-      updated1376 = cloudData.prelist1376;
+      updated1376 = enrichPrelistWithMaster(cloudData.prelist1376, '1376');
       setPrelist1376(updated1376);
     }
 

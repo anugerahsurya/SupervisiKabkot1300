@@ -272,13 +272,13 @@ function mapRowToObject(headers, row, kdSub, kdKab) {
 
   return {
     kdKab: kdKab,
-    nmKab: kdKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota',
+    nmKab: String(d['NAMA_KABUPATEN'] || d['NMKAB'] || (kdKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota')).trim(),
     kdKec: kdSub.slice(0, 7),
-    nmKec: '',
+    nmKec: String(d['NAMA_KECAMATAN'] || d['NMKEC'] || d['KECAMATAN'] || '').trim(),
     kdDesa: kdSub.slice(0, 10),
-    nmDesa: '',
+    nmDesa: String(d['NAMA_DESA'] || d['NMDESA'] || d['NAMA_NAGARI'] || d['DESA'] || d['NAGARI'] || '').trim(),
     kdSubSls: kdSub,
-    nmSubSls: 'Sub SLS [' + kdSub.slice(-2) + ']',
+    nmSubSls: String(d['NAMA_SUB_SLS'] || d['NMSUBSLS'] || d['NAMA_SLS'] || d['NMSLS'] || ('Sub SLS [' + kdSub.slice(-2) + ']')).trim(),
 
     prelistKeluargaTot: plKlgTot,
     prelistKeluargaSub: plKlgSub,

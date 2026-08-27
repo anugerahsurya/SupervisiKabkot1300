@@ -24,6 +24,7 @@ import {
   Download 
 } from 'lucide-react';
 import { exportToExcel } from '../services/excelService';
+import { masterWilayahMap, enrichPrelistWithMaster } from '../data/masterWilayahInfo';
 
 const PAGE_SIZE = 20;
 
@@ -32,6 +33,11 @@ export default function PrelistTableSection({
   kodeKab = '1376', 
   onSelectDetail 
 }) {
+  // Always normalize prelistData to ensure Kecamatan, Desa, and SLS names are fully populated
+  const normalizedData = useMemo(() => {
+    return enrichPrelistWithMaster(prelistData, kodeKab);
+  }, [prelistData, kodeKab]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedKec, setSelectedKec] = useState('');
   const [selectedDesa, setSelectedDesa] = useState('');
@@ -54,22 +60,22 @@ export default function PrelistTableSection({
   // 1. Extract unique Kecamatan list
   const kecamatanList = useMemo(() => {
     const set = new Set();
-    prelistData.forEach(item => {
+    normalizedData.forEach(item => {
       if (item.nmKec) set.add(item.nmKec);
     });
     return Array.from(set).sort();
-  }, [prelistData]);
+  }, [normalizedData]);
 
   // 2. Extract unique Desa list (dependent on selected Kecamatan)
   const desaList = useMemo(() => {
     const set = new Set();
-    prelistData.forEach(item => {
+    normalizedData.forEach(item => {
       if (!selectedKec || item.nmKec === selectedKec) {
         if (item.nmDesa) set.add(item.nmDesa);
       }
     });
     return Array.from(set).sort();
-  }, [prelistData, selectedKec]);
+  }, [normalizedData, selectedKec]);
 
   // Reset Desa filter when Kecamatan changes
   const handleKecChange = (e) => {
@@ -95,13 +101,13 @@ export default function PrelistTableSection({
 
   // Status counts for pills
   const statusCounts = useMemo(() => {
-    let cAll = prelistData.length;
+    let cAll = normalizedData.length;
     let c100 = 0;
     let cDraft = 0;
     let cOpen = 0;
     let cLt90 = 0;
 
-    prelistData.forEach(d => {
+    normalizedData.forEach(d => {
       const pct = (d.totPct !== undefined && d.totPct !== null) ? Number(d.totPct) * 100 : 0;
       const draft = Number(d.totDraft || 0);
       const open = Number(d.totOpen || 0);
@@ -113,13 +119,13 @@ export default function PrelistTableSection({
     });
 
     return { cAll, c100, cDraft, cOpen, cLt90 };
-  }, [prelistData]);
+  }, [normalizedData]);
 
   // 3. Filter data
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
 
-    return prelistData.filter(item => {
+    return normalizedData.filter(item => {
       // Search term filter
       if (term) {
         const matchKec = (item.nmKec || '').toLowerCase().includes(term);
