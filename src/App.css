@@ -1041,16 +1041,34 @@
 .sortable-th {
   cursor: pointer;
   user-select: none;
+  transition: var(--transition);
 }
 
 .sortable-th:hover {
+  background-color: var(--primary-50);
   color: var(--primary-700);
+}
+
+.sort-icon-active {
+  color: var(--primary-700);
+}
+
+.sort-icon-muted {
+  color: var(--text-light);
+  opacity: 0.45;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.sortable-th:hover .sort-icon-muted {
+  opacity: 1;
+  color: var(--primary);
 }
 
 .th-content {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
 }
 
 .sub-sls-cell {

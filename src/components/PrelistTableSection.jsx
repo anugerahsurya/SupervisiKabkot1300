@@ -114,18 +114,32 @@ export default function PrelistTableSection({
 
   // 4. Sort data
   const sortedData = useMemo(() => {
+    if (!sortField) return filteredData;
     return [...filteredData].sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
 
-      if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = (bVal || '').toLowerCase();
+      // Numeric comparison if either value is number or numeric field
+      const isNumericField = [
+        'prelistKeluargaTot', 'prelistKeluargaSub', 'prelistKeluargaPct',
+        'prelistUsahaTot', 'prelistUsahaSub', 'prelistUsahaPct',
+        'totPrelistTot', 'totPrelistSub', 'totPrelistPct',
+        'totBeban', 'totSubmit', 'totPct', 'deltaJml', 'deltaPct'
+      ].includes(sortField);
+
+      if (isNumericField || typeof aVal === 'number' || typeof bVal === 'number') {
+        const numA = Number(aVal) || 0;
+        const numB = Number(bVal) || 0;
+        return sortDir === 'asc' ? numA - numB : numB - numA;
       }
 
-      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
-      return 0;
+      // String comparison
+      aVal = String(aVal || '').toLowerCase();
+      bVal = String(bVal || '').toLowerCase();
+
+      return sortDir === 'asc' 
+        ? aVal.localeCompare(bVal, 'id', { numeric: true }) 
+        : bVal.localeCompare(aVal, 'id', { numeric: true });
     });
   }, [filteredData, sortField, sortDir]);
 
@@ -143,6 +157,15 @@ export default function PrelistTableSection({
       setSortField(field);
       setSortDir('asc');
     }
+  };
+
+  const renderSortIcon = (field) => {
+    if (sortField === field) {
+      return sortDir === 'asc' 
+        ? <ArrowUp size={13} className="sort-icon-active text-primary" /> 
+        : <ArrowDown size={13} className="sort-icon-active text-primary" />;
+    }
+    return <ArrowUpDown size={12} className="sort-icon-muted text-light" />;
   };
 
   // 6. Aggregate Summary Metrics of filtered data
@@ -373,46 +396,66 @@ export default function PrelistTableSection({
         <table className="custom-table">
           <thead>
             <tr>
-              <th style={{ width: '50px' }}>No</th>
-              <th onClick={() => handleSort('nmKec')} className="sortable-th">
+              <th onClick={() => handleSort('kdSubSls')} className="sortable-th" style={{ width: '55px' }} title="Urutkan berdasarkan Nomor / Urutan">
+                <div className="th-content justify-center">
+                  <span>No</span>
+                  {renderSortIcon('kdSubSls')}
+                </div>
+              </th>
+              <th onClick={() => handleSort('nmKec')} className="sortable-th" title="Urutkan berdasarkan Nama Kecamatan">
                 <div className="th-content">
                   <span>Kecamatan</span>
-                  {sortField === 'nmKec' && (sortDir === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />)}
+                  {renderSortIcon('nmKec')}
                 </div>
               </th>
-              <th onClick={() => handleSort('nmDesa')} className="sortable-th">
+              <th onClick={() => handleSort('nmDesa')} className="sortable-th" title="Urutkan berdasarkan Nama Desa / Nagari">
                 <div className="th-content">
                   <span>Desa / Nagari</span>
-                  {sortField === 'nmDesa' && (sortDir === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />)}
+                  {renderSortIcon('nmDesa')}
                 </div>
               </th>
-              <th onClick={() => handleSort('nmSubSls')} className="sortable-th">
+              <th onClick={() => handleSort('nmSubSls')} className="sortable-th" title="Urutkan berdasarkan Nama SLS / Sub SLS">
                 <div className="th-content">
                   <span>Nama SLS / Sub SLS</span>
-                  {sortField === 'nmSubSls' && (sortDir === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />)}
+                  {renderSortIcon('nmSubSls')}
                 </div>
               </th>
-              <th className="text-center">Prelist Keluarga</th>
-              <th className="text-center">Prelist Usaha</th>
-              <th onClick={() => handleSort('totBeban')} className="sortable-th text-right">
+              <th onClick={() => handleSort('prelistKeluargaSub')} className="sortable-th text-center" title="Urutkan berdasarkan Submit Prelist Keluarga">
+                <div className="th-content justify-center">
+                  <span>Prelist Keluarga</span>
+                  {renderSortIcon('prelistKeluargaSub')}
+                </div>
+              </th>
+              <th onClick={() => handleSort('prelistUsahaSub')} className="sortable-th text-center" title="Urutkan berdasarkan Submit Prelist Usaha">
+                <div className="th-content justify-center">
+                  <span>Prelist Usaha</span>
+                  {renderSortIcon('prelistUsahaSub')}
+                </div>
+              </th>
+              <th onClick={() => handleSort('totBeban')} className="sortable-th text-right" title="Urutkan berdasarkan Total Beban Keseluruhan">
                 <div className="th-content justify-end">
                   <span>Total Beban</span>
-                  {sortField === 'totBeban' && (sortDir === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />)}
+                  {renderSortIcon('totBeban')}
                 </div>
               </th>
-              <th onClick={() => handleSort('totSubmit')} className="sortable-th text-right">
+              <th onClick={() => handleSort('totSubmit')} className="sortable-th text-right" title="Urutkan berdasarkan Total Submit">
                 <div className="th-content justify-end">
                   <span>Total Submit</span>
-                  {sortField === 'totSubmit' && (sortDir === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />)}
+                  {renderSortIcon('totSubmit')}
                 </div>
               </th>
-              <th onClick={() => handleSort('totPct')} className="sortable-th text-center">
+              <th onClick={() => handleSort('totPct')} className="sortable-th text-center" title="Urutkan berdasarkan Persentase Capaian">
                 <div className="th-content justify-center">
                   <span>% Capaian</span>
-                  {sortField === 'totPct' && (sortDir === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />)}
+                  {renderSortIcon('totPct')}
                 </div>
               </th>
-              <th className="text-center">Delta Harian</th>
+              <th onClick={() => handleSort('deltaJml')} className="sortable-th text-center" title="Urutkan berdasarkan Delta Harian">
+                <div className="th-content justify-center">
+                  <span>Delta Harian</span>
+                  {renderSortIcon('deltaJml')}
+                </div>
+              </th>
               <th className="text-center" style={{ width: '80px' }}>Detail</th>
             </tr>
           </thead>
