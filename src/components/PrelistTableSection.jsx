@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Table, 
   Search, 
@@ -13,12 +13,12 @@ import {
   Eye, 
   CheckCircle2, 
   AlertCircle, 
-  Layers,
-  Building,
-  Users,
-  Briefcase,
-  TrendingUp,
-  Download
+  Layers, 
+  Building, 
+  Users, 
+  Briefcase, 
+  TrendingUp, 
+  Download 
 } from 'lucide-react';
 import { exportToExcel } from '../services/excelService';
 
@@ -36,6 +36,15 @@ export default function PrelistTableSection({
   const [sortField, setSortField] = useState('kdSubSls');
   const [sortDir, setSortDir] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset filters when switching between regions
+  useEffect(() => {
+    setSearchTerm('');
+    setSelectedKec('');
+    setSelectedDesa('');
+    setStatusFilter('ALL');
+    setCurrentPage(1);
+  }, [kodeKab]);
 
   const wilName = kodeKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota';
 

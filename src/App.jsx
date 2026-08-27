@@ -44,7 +44,10 @@ export default function App() {
   const [prelist1308, setPrelist1308] = useState(() => {
     const cached = localStorage.getItem('se2026_prelist_1308');
     if (cached) {
-      try { return JSON.parse(cached); } catch (e) {}
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
     }
     return initialPrelist1308;
   });
@@ -52,7 +55,10 @@ export default function App() {
   const [prelist1376, setPrelist1376] = useState(() => {
     const cached = localStorage.getItem('se2026_prelist_1376');
     if (cached) {
-      try { return JSON.parse(cached); } catch (e) {}
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
     }
     return initialPrelist1376;
   });
@@ -226,6 +232,7 @@ export default function App() {
             {/* Section 1: Pengawalan */}
             {(activeSection === 'all' || activeSection === 'pengawalan') && (
               <PengawalanSection 
+                key={`pengawalan-${activeTab}`}
                 pengawalanData={currentPengawalan}
                 kodeKab={activeTab}
               />
@@ -242,6 +249,7 @@ export default function App() {
             {/* Section 3: Tabel Rekap Prelist */}
             {(activeSection === 'all' || activeSection === 'prelist') && (
               <PrelistTableSection 
+                key={`prelist-${activeTab}`}
                 prelistData={currentPrelistData}
                 kodeKab={activeTab}
                 onSelectDetail={(row) => setSelectedSubSls(row)}
