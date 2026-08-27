@@ -3,20 +3,30 @@ import {
   Building2, 
   MapPin, 
   BarChart3, 
-  UploadCloud, 
   Database, 
   FileSpreadsheet,
   CheckCircle2,
-  Sparkles
+  RefreshCw,
+  Loader2,
+  Palette
 } from 'lucide-react';
+
+const THEME_OPTIONS = [
+  { id: 'orange', name: 'Orange', color: '#ea580c' },
+  { id: 'navy', name: 'Navy', color: '#1d4ed8' },
+  { id: 'jade', name: 'Jade', color: '#059669' }
+];
 
 export default function Navbar({ 
   activeTab, 
   setActiveTab, 
-  onOpenUpload, 
   onOpenGas, 
   onExport,
-  lastUpdated 
+  onQuickSyncGas,
+  isSyncingGas,
+  lastUpdated,
+  currentTheme,
+  onThemeChange
 }) {
   return (
     <header className="navbar-wrapper">
@@ -29,35 +39,67 @@ export default function Navbar({
               <span className="brand-dot"></span>
               <span className="brand-text">SE2026 • BPS SUMBAR</span>
             </div>
+
+            <div className="cloud-status-pill">
+              <span className="live-dot"></span>
+              <span>GAS Cloud</span>
+            </div>
+
             {lastUpdated && (
               <div className="last-sync-pill">
                 <CheckCircle2 size={12} className="sync-icon-ok" />
-                <span>Data per: {lastUpdated}</span>
+                <span>Per: {lastUpdated}</span>
               </div>
             )}
           </div>
 
           <div className="utility-actions">
+            
+            {/* Theme Preset Switcher */}
+            <div className="theme-switcher-pill-group" title="Ubah Preset Warna Tampilan">
+              <Palette size={13} className="text-muted" />
+              {THEME_OPTIONS.map((th) => (
+                <button
+                  key={th.id}
+                  type="button"
+                  className={`theme-swatch-btn ${currentTheme === th.id ? 'active' : ''}`}
+                  onClick={() => onThemeChange(th.id)}
+                  title={`Tema ${th.name}`}
+                >
+                  <span className="swatch-circle" style={{ backgroundColor: th.color }}></span>
+                  <span className="swatch-label">{th.name}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Sync Button */}
             <button 
               type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={onOpenUpload}
-              title="Perbarui Data dengan Upload File Excel"
+              className="btn btn-secondary btn-sm quick-sync-btn"
+              onClick={onQuickSyncGas}
+              disabled={isSyncingGas}
+              title="Tarik data terbaru langsung dari Google Spreadsheet"
             >
-              <UploadCloud size={14} />
-              <span>Update Excel</span>
+              {isSyncingGas ? (
+                <Loader2 size={13} className="animate-spin text-primary" />
+              ) : (
+                <RefreshCw size={13} className="text-primary" />
+              )}
+              <span>{isSyncingGas ? 'Sinkronisasi...' : 'Sinkron GAS'}</span>
             </button>
 
+            {/* GAS Settings */}
             <button 
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={onOpenGas}
-              title="Kelola Koneksi Database Google Spreadsheet"
+              title="Kelola Koneksi & Pengaturan Database Google Spreadsheet"
             >
               <Database size={14} />
-              <span>Database GAS</span>
+              <span>Pengaturan GAS</span>
             </button>
 
+            {/* Export Excel */}
             <button 
               type="button"
               className="btn btn-primary btn-sm"

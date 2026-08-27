@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import PengawalanSection from './components/PengawalanSection';
 import UraianTugasSection from './components/UraianTugasSection';
 import PrelistTableSection from './components/PrelistTableSection';
 import WilayahOverview from './components/WilayahOverview';
-import SubSlsDetailModal from './components/SubSlsDetailModal';
-import ExcelUploadModal from './components/ExcelUploadModal';
-import GasModal from './components/GasModal';
+import ToastNotification from './components/ToastNotification';
 import { 
   initialPengawalanData, 
   initialUraianTugas, 
@@ -15,9 +13,32 @@ import {
   initialPrelist1376 
 } from './data/initialData';
 import { exportToExcel } from './services/excelService';
+import { getGasUrl, fetchDatasetsFromGas } from './services/gasService';
 import './App.css';
 
+// Lazy load modals for optimal bundle splitting
+const SubSlsDetailModal = lazy(() => import('./components/SubSlsDetailModal'));
+const GasModal = lazy(() => import('./components/GasModal'));
+
+const getFormattedTimestamp = () => {
+  const now = new Date();
+  const datePart = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  const timePart = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+  return `${datePart}, ${timePart} WIB`;
+};
+
 export default function App() {
+  // Theme Preset: 'orange' | 'navy' | 'jade'
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    return localStorage.getItem('se2026_theme_preset') || 'orange';
+  });
+
+  // Apply theme attribute to root
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    localStorage.setItem('se2026_theme_preset', currentTheme);
+  }, [currentTheme]);
+
   // Wilayah tab: '1376' (Payakumbuh) | '1308' (Lima Puluh Kota) | 'overview'
   const [activeTab, setActiveTab] = useState('1376');
 
@@ -64,13 +85,14 @@ export default function App() {
   });
 
   const [lastUpdated, setLastUpdated] = useState(() => {
-    return localStorage.getItem('se2026_last_updated') || '27 Agu 2026';
+    return localStorage.getItem('se2026_last_updated') || '27 Agu 2026, 17:35 WIB';
   });
 
-  // Modal States
+  // Modal & Async Action States
   const [selectedSubSls, setSelectedSubSls] = useState(null);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isGasOpen, setIsGasOpen] = useState(false);
+  const [isSyncingGas, setIsSyncingGas] = useState(false);
+  const [toast, setToast] = useState(null); // { type, title, message }
 
   // Update localStorage when data changes
   const saveAllToCache = (pData, uTugas, p1308, p1376, timeStr) => {
@@ -81,69 +103,62 @@ export default function App() {
     if (timeStr) localStorage.setItem('se2026_last_updated', timeStr);
   };
 
-  // Handler for Excel upload
-  const handleDataUpdated = (result) => {
-    const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-    setLastUpdated(nowStr);
-
-    if (result.type === 'pengawalan') {
-      const updatedP = { ...pengawalanData, ...result.data.pengawalan };
-      setPengawalanData(updatedP);
-      let updatedU = uraianTugas;
-      if (result.data.uraianTugas && result.data.uraianTugas.length > 0) {
-        updatedU = result.data.uraianTugas;
-        setUraianTugas(updatedU);
-      }
-      saveAllToCache(updatedP, updatedU, prelist1308, prelist1376, nowStr);
-    } else if (result.type === 'prelist_multi') {
-      let p1308 = prelist1308;
-      let p1376 = prelist1376;
-      if (result.prelist1308 && result.prelist1308.length > 0) {
-        p1308 = result.prelist1308;
-        setPrelist1308(p1308);
-      }
-      if (result.prelist1376 && result.prelist1376.length > 0) {
-        p1376 = result.prelist1376;
-        setPrelist1376(p1376);
-      }
-      saveAllToCache(pengawalanData, uraianTugas, p1308, p1376, nowStr);
-    } else if (result.type === 'prelist') {
-      if (result.targetKab === '1376') {
-        setPrelist1376(result.data);
-        saveAllToCache(pengawalanData, uraianTugas, prelist1308, result.data, nowStr);
-        setActiveTab('1376');
-      } else {
-        setPrelist1308(result.data);
-        saveAllToCache(pengawalanData, uraianTugas, result.data, prelist1376, nowStr);
-        setActiveTab('1308');
-      }
-    }
-  };
-
   // Handler for Google Apps Script sync
   const handleDataSyncedFromGas = (cloudData) => {
-    const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+    const nowStr = getFormattedTimestamp();
     setLastUpdated(nowStr);
 
+    let updatedP = pengawalanData;
+    let updatedU = uraianTugas;
+    let updated1308 = prelist1308;
+    let updated1376 = prelist1376;
+
     if (cloudData.pengawalan && Object.keys(cloudData.pengawalan).length > 0) {
-      setPengawalanData(cloudData.pengawalan);
+      updatedP = cloudData.pengawalan;
+      setPengawalanData(updatedP);
     }
     if (cloudData.uraianTugas && cloudData.uraianTugas.length > 0) {
-      setUraianTugas(cloudData.uraianTugas);
+      updatedU = cloudData.uraianTugas;
+      setUraianTugas(updatedU);
     }
     if (cloudData.prelist1308 && cloudData.prelist1308.length > 0) {
-      setPrelist1308(cloudData.prelist1308);
+      updated1308 = cloudData.prelist1308;
+      setPrelist1308(updated1308);
     }
     if (cloudData.prelist1376 && cloudData.prelist1376.length > 0) {
-      setPrelist1376(cloudData.prelist1376);
+      updated1376 = cloudData.prelist1376;
+      setPrelist1376(updated1376);
     }
-    saveAllToCache(
-      cloudData.pengawalan || pengawalanData,
-      cloudData.uraianTugas || uraianTugas,
-      cloudData.prelist1308 || prelist1308,
-      cloudData.prelist1376 || prelist1376,
-      nowStr
-    );
+
+    saveAllToCache(updatedP, updatedU, updated1308, updated1376, nowStr);
+    setToast({
+      type: 'success',
+      title: 'Sinkronisasi Sukses',
+      message: `Seluruh data berhasil ditarik dari Google Spreadsheet (${nowStr}).`
+    });
+  };
+
+  // 1-Click Quick Sync from Navbar
+  const handleQuickSyncGas = async () => {
+    const url = getGasUrl();
+    if (!url) {
+      setIsGasOpen(true);
+      return;
+    }
+
+    setIsSyncingGas(true);
+    try {
+      const data = await fetchDatasetsFromGas(url);
+      handleDataSyncedFromGas(data);
+    } catch (err) {
+      setToast({
+        type: 'error',
+        title: 'Gagal Sinkronisasi GAS',
+        message: err.message || 'Periksa koneksi Google Apps Script atau klik Pengaturan GAS.'
+      });
+    } finally {
+      setIsSyncingGas(false);
+    }
   };
 
   // Payload generator for GAS push
@@ -166,95 +181,92 @@ export default function App() {
       const combined = [...prelist1376, ...prelist1308];
       exportToExcel(combined, `Rekap_Prelist_Gabungan_1376_1308_${new Date().toISOString().slice(0, 10)}.xlsx`);
     }
+    setToast({
+      type: 'info',
+      title: 'Ekspor Dimulai',
+      message: 'File Excel sedang diunduh ke komputer Anda.'
+    });
   };
 
+  // Reset to Baseline Data
+  const handleResetData = () => {
+    if (!window.confirm('Reset seluruh data ke kondisi awal bawaan aplikasi?')) return;
+    localStorage.removeItem('se2026_pengawalan_data');
+    localStorage.removeItem('se2026_uraian_tugas');
+    localStorage.removeItem('se2026_prelist_1308');
+    localStorage.removeItem('se2026_prelist_1376');
+    localStorage.removeItem('se2026_last_updated');
+    
+    setPengawalanData(initialPengawalanData);
+    setUraianTugas(initialUraianTugas);
+    setPrelist1308(initialPrelist1308);
+    setPrelist1376(initialPrelist1376);
+    const defTime = '27 Agu 2026, 17:35 WIB';
+    setLastUpdated(defTime);
+    setToast({
+      type: 'info',
+      title: 'Data Direset',
+      message: 'Dataset telah dikembalikan ke data awal bawaan aplikasi.'
+    });
+  };
+
+  // Active Wilayah Datasets
+  const currentPengawalan = pengawalanData[activeTab] || null;
   const currentPrelistData = activeTab === '1376' ? prelist1376 : prelist1308;
-  const currentPengawalan = pengawalanData?.[activeTab];
 
   return (
     <div className="app-layout">
       
-      {/* Top Navigation */}
+      {/* Toast Notification Container */}
+      <ToastNotification 
+        toast={toast} 
+        onClose={() => setToast(null)} 
+      />
+
+      {/* Header & Navigation */}
       <Navbar 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenUpload={() => setIsUploadOpen(true)}
         onOpenGas={() => setIsGasOpen(true)}
         onExport={handleExport}
+        onQuickSyncGas={handleQuickSyncGas}
+        isSyncingGas={isSyncingGas}
         lastUpdated={lastUpdated}
+        currentTheme={currentTheme}
+        onThemeChange={(themeId) => setCurrentTheme(themeId)}
       />
 
       {/* Main Content Area */}
       <main className="main-content-container">
         
-        {/* VIEW 1: OVERVIEW & COMPARISON */}
-        {activeTab === 'overview' && (
-          <div className="view-pane animate-fade-in">
-            <WilayahOverview 
-              pengawalanData={pengawalanData}
-              prelist1308={prelist1308}
-              prelist1376={prelist1376}
-              onSelectWilayah={(code) => setActiveTab(code)}
-            />
-
-            {/* Also show the 11 Tasks in Overview */}
-            <UraianTugasSection 
-              uraianTugas={uraianTugas}
-              linkNote={uraianTugasLink}
-            />
-          </div>
-        )}
-
-        {/* VIEW 2 & 3: SPECIFIC WILAYAH (1376 or 1308) */}
-        {(activeTab === '1376' || activeTab === '1308') && (
-          <div className="view-pane animate-fade-in">
+        {activeTab === 'overview' ? (
+          /* Tab: Ringkasan & Perbandingan Wilayah */
+          <WilayahOverview 
+            pengawalanData={pengawalanData}
+            prelist1308={prelist1308}
+            prelist1376={prelist1376}
+            onSelectWilayah={(kode) => {
+              setActiveTab(kode);
+              setActiveSection('all');
+            }}
+          />
+        ) : (
+          /* Tab: Detail Wilayah (1376 Payakumbuh atau 1308 Lima Puluh Kota) */
+          <div className="wilayah-view-wrapper">
             
-            {/* Quick Section Filter Pills */}
-            <div className="section-switch-nav">
-              <button 
-                type="button"
-                className={`sec-pill ${activeSection === 'all' ? 'active' : ''}`}
-                onClick={() => setActiveSection('all')}
-              >
-                Semua Bagian
-              </button>
-              <button 
-                type="button"
-                className={`sec-pill ${activeSection === 'pengawalan' ? 'active' : ''}`}
-                onClick={() => setActiveSection('pengawalan')}
-              >
-                1. Pengawalan Kualitas & Supervisi
-              </button>
-              <button 
-                type="button"
-                className={`sec-pill ${activeSection === 'uraian' ? 'active' : ''}`}
-                onClick={() => setActiveSection('uraian')}
-              >
-                2. 11 Poin Uraian Tugas
-              </button>
-              <button 
-                type="button"
-                className={`sec-pill ${activeSection === 'prelist' ? 'active' : ''}`}
-                onClick={() => setActiveSection('prelist')}
-              >
-                3. Tabel Rekap Prelist (20/Hal)
-              </button>
-            </div>
-
-            {/* Section 1: Pengawalan */}
+            {/* Section 1: KPI & Pengawalan Kualitas Lapangan */}
             {(activeSection === 'all' || activeSection === 'pengawalan') && (
               <PengawalanSection 
-                key={`pengawalan-${activeTab}`}
-                pengawalanData={currentPengawalan}
+                pengawalan={currentPengawalan}
                 kodeKab={activeTab}
               />
             )}
 
-            {/* Section 2: 11 Poin Uraian Tugas */}
+            {/* Section 2: 11 Uraian Tugas Tim Pengawalan */}
             {(activeSection === 'all' || activeSection === 'uraian') && (
               <UraianTugasSection 
                 uraianTugas={uraianTugas}
-                linkNote={uraianTugasLink}
+                uraianTugasLink={uraianTugasLink}
               />
             )}
 
@@ -282,30 +294,46 @@ export default function App() {
             <span>BPS Kabupaten Lima Puluh Kota & Kota Payakumbuh</span>
           </div>
           <p className="footer-copy">
-            Sistem Informasi Supervisi & Pengawalan Kualitas Lapangan. Data dapat diperbarui via upload Excel atau Google Spreadsheet.
+            Sistem Informasi Supervisi & Pengawalan Kualitas Lapangan. Terhubung langsung ke Google Spreadsheet via Google Apps Script.
           </p>
+          <div className="footer-actions">
+            <button 
+              type="button" 
+              className="footer-link-btn" 
+              onClick={handleResetData}
+            >
+              Reset ke Data Default
+            </button>
+            <span className="footer-separator">•</span>
+            <button 
+              type="button" 
+              className="footer-link-btn" 
+              onClick={() => setIsGasOpen(true)}
+            >
+              Konfigurasi Database GAS
+            </button>
+          </div>
         </div>
       </footer>
 
-      {/* Modals */}
-      <SubSlsDetailModal 
-        data={selectedSubSls}
-        onClose={() => setSelectedSubSls(null)}
-      />
+      {/* Lazy Loaded Modals with Suspense */}
+      <Suspense fallback={null}>
+        {selectedSubSls && (
+          <SubSlsDetailModal 
+            data={selectedSubSls}
+            onClose={() => setSelectedSubSls(null)}
+          />
+        )}
 
-      <ExcelUploadModal 
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        onDataUpdated={handleDataUpdated}
-        onOpenGasModal={() => setIsGasOpen(true)}
-      />
-
-      <GasModal 
-        isOpen={isGasOpen}
-        onClose={() => setIsGasOpen(false)}
-        getCurrentDataPayload={getCurrentDataPayload}
-        onDataSynced={handleDataSyncedFromGas}
-      />
+        {isGasOpen && (
+          <GasModal 
+            isOpen={isGasOpen}
+            onClose={() => setIsGasOpen(false)}
+            getCurrentDataPayload={getCurrentDataPayload}
+            onDataSynced={handleDataSyncedFromGas}
+          />
+        )}
+      </Suspense>
 
     </div>
   );
