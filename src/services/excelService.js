@@ -210,7 +210,8 @@ function parseSqlLabUmkmFast(sheet, headerRow) {
 
     const kdKab = is1376 ? '1376' : '1308';
     const masterInfo = masterWilayahMap[kdSub] || {};
-    const username = getStr(row, idxUsername);
+    const rawUsername = getStr(row, idxUsername);
+    const username = /^\d+$/.test(rawUsername) ? '' : rawUsername;
 
     const totPrelist = getNum(row, idxJmlPrelist);
     const plOpen = idxPrelistOpen !== -1 ? getNum(row, idxPrelistOpen) : 0;

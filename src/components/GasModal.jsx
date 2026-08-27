@@ -653,7 +653,10 @@ function mapRowToObject(headers, row, kdSub, kdKab) {
     deltaJml: 0,
     deltaPct: 0,
     dummy: getNum('JUMLAH_DUMMY'),
-    username: String(d['CURRENT_USER_USERNAME'] || d['USERNAME'] || d['D.USERNAME'] || d['PETUGAS'] || d['PPL'] || '').trim()
+    username: (function() {
+      var u = String(d['CURRENT_USER_USERNAME'] || d['USERNAME'] || d['D.USERNAME'] || d['PETUGAS'] || d['PPL'] || '').trim();
+      return /^\d+$/.test(u) ? '' : u;
+    })()
   };
 }
 

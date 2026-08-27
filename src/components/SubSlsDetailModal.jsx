@@ -16,16 +16,18 @@ import { masterWilayahMap } from '../data/masterWilayahInfo';
 export default function SubSlsDetailModal({ data, onClose }) {
   if (!data) return null;
 
-  const master = masterWilayahMap[data.kdSubSls] || {};
-  const nmKab = (data.nmKab && data.nmKab.trim() !== '') ? data.nmKab : (master.nmKab || (data.kdSubSls?.startsWith('1376') ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota'));
-  const kdKab = data.kdKab || master.kdKab || (data.kdSubSls?.startsWith('1376') ? '1376' : '1308');
-  const kdKec = data.kdKec || master.kdKec || data.kdSubSls?.slice(0, 7);
-  const nmKec = (data.nmKec && data.nmKec.trim() !== '') ? data.nmKec : (master.nmKec || `Kecamatan [${data.kdSubSls?.slice(4, 7)}]`);
-  const kdDesa = data.kdDesa || master.kdDesa || data.kdSubSls?.slice(0, 10);
-  const nmDesa = (data.nmDesa && data.nmDesa.trim() !== '') ? data.nmDesa : (master.nmDesa || `Desa [${data.kdSubSls?.slice(7, 10)}]`);
+  const kdSubSls = String(data.kdSubSls || '').trim();
+  const master = masterWilayahMap[kdSubSls] || {};
+  const is1376 = kdSubSls.startsWith('1376');
+  const kdKab = data.kdKab || master.kdKab || (is1376 ? '1376' : '1308');
+  const nmKab = (data.nmKab && data.nmKab.trim() !== '') ? data.nmKab : (master.nmKab || (kdKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota'));
+  const kdKec = data.kdKec || master.kdKec || kdSubSls.slice(0, 7);
+  const nmKec = (data.nmKec && data.nmKec.trim() !== '') ? data.nmKec : (master.nmKec || `Kecamatan [${kdSubSls.slice(4, 7)}]`);
+  const kdDesa = data.kdDesa || master.kdDesa || kdSubSls.slice(0, 10);
+  const nmDesa = (data.nmDesa && data.nmDesa.trim() !== '') ? data.nmDesa : (master.nmDesa || `Desa [${kdSubSls.slice(7, 10)}]`);
   const nmSubSls = (data.nmSubSls && data.nmSubSls.trim() !== '' && !data.nmSubSls.startsWith('Sub SLS [')) 
     ? data.nmSubSls 
-    : (master.nmSubSls || data.nmSubSls || `Sub SLS [${data.kdSubSls?.slice(-2)}]`);
+    : (master.nmSubSls || data.nmSubSls || `Sub SLS [${kdSubSls.slice(-2)}]`);
 
   const totBeban = Number(data.totBeban || 0);
   const totSubmit = Number(data.totSubmit || 0);
