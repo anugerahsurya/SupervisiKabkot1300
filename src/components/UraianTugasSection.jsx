@@ -156,7 +156,7 @@ export default function UraianTugasSection({ uraianTugas = [], linkNote = '' }) 
                 </div>
 
                 <p className="task-desc-text">
-                  {task.poin}
+                  {task.poin ? task.poin.charAt(0).toUpperCase() + task.poin.slice(1) : ''}
                 </p>
 
                 <span className="task-toggle-hint">Klik kartu untuk ubah status</span>

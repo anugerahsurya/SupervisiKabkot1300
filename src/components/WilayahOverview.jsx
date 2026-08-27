@@ -177,11 +177,6 @@ export default function WilayahOverview({
                 <span className="comp-m-label">UB / UM Open/Draft:</span>
                 <span className="comp-m-val">{p1376.ubOpenDraft ?? 0} UB / {p1376.umOpenDraft ?? 0} UM</span>
               </div>
-
-              <div className="comp-metric-item">
-                <span className="comp-m-label">Tim Supervisi:</span>
-                <span className="comp-m-val text-muted text-sm">{p1376.timPengawalan || '-'}</span>
-              </div>
             </div>
 
           </div>
@@ -260,11 +255,6 @@ export default function WilayahOverview({
               <div className="comp-metric-item">
                 <span className="comp-m-label">UB / UM Open/Draft:</span>
                 <span className="comp-m-val">{p1308.ubOpenDraft ?? 0} UB / {p1308.umOpenDraft ?? 0} UM</span>
-              </div>
-
-              <div className="comp-metric-item">
-                <span className="comp-m-label">Tim Supervisi:</span>
-                <span className="comp-m-val text-muted text-sm">{p1308.timPengawalan || '-'}</span>
               </div>
             </div>
 

@@ -55,35 +55,35 @@ export const initialPengawalanData = {
 export const initialUraianTugas = [
   {
     "no": 1,
-    "poin": "lakukan identifikasi wilayah dg status submit >95 persen, pastikan semua submit dan selesaikan SLS"
+    "poin": "Lakukan identifikasi wilayah dengan status submit >95 persen, pastikan semua submit dan selesaikan SLS"
   },
   {
     "no": 2,
-    "poin": "lakukan identifikasi SLS dg status assignment open 100 persen, lakukan pendataan bersama dg PPL, PML dan organik kabko pd SLS yg msh open"
+    "poin": "Lakukan identifikasi SLS dengan status assignment open 100 persen, lakukan pendataan bersama dengan PPL, PML dan organik kabko pada SLS yang masih open"
   },
   {
     "no": 3,
-    "poin": "lakukan identifikasi SLS dg assignment status draft > 95 persen"
+    "poin": "Lakukan identifikasi SLS dengan assignment status draft > 95 persen"
   },
   {
     "no": 4,
-    "poin": "identifikasi UB dan tindaklanjuti yg belum didata dan tidak eligible"
+    "poin": "Identifikasi UB dan tindaklanjuti yang belum didata dan tidak eligible"
   },
   {
     "no": 5,
-    "poin": "identifikasi UM  dan tindaklanjuti yg blm didata dan tidak eligible"
+    "poin": "Identifikasi UM dan tindaklanjuti yang belum didata dan tidak eligible"
   },
   {
     "no": 6,
-    "poin": "identifikasi responden VHTL yg blm submit, segera submit"
+    "poin": "Identifikasi responden VHTL yang belum submit, segera submit"
   },
   {
     "no": 7,
-    "poin": "tindaklanjuti anomali bersama tim kualitas data"
+    "poin": "Tindaklanjuti anomali bersama tim kualitas data"
   },
   {
     "no": 8,
-    "poin": "tindaklanjuti missing value"
+    "poin": "Tindaklanjuti missing value"
   },
   {
     "no": 9,
@@ -91,11 +91,11 @@ export const initialUraianTugas = [
   },
   {
     "no": 10,
-    "poin": "uji petik SLS yg sdh selesai, lihat kemampuan probing PPL dalam menggali usaha"
+    "poin": "Uji petik SLS yang sudah selesai, lihat kemampuan probing PPL dalam menggali usaha"
   },
   {
     "no": 11,
-    "poin": "pastikan tidak ada assignment yg berstatus open di tgl 31 Agustus utamanya assignment usaha"
+    "poin": "Pastikan tidak ada assignment yang berstatus open di tanggal 31 Agustus utamanya assignment usaha"
   }
 ];
 

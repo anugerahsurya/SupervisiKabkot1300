@@ -204,34 +204,22 @@ export default function PengawalanSection({ pengawalanData, kodeKab }) {
       {/* Detail Grid: Tim Supervisi & Strategi Koordinasi */}
       <div className="supervision-detail-grid">
         
-        {/* Tim & Informasi Supervisi */}
-        <div className="content-card team-card">
+        {/* Evaluasi Usaha & Catatan Sinergi */}
+        <div className="content-card">
           <div className="card-header">
             <div className="card-header-icon">
-              <Users size={18} />
+              <Building size={18} />
             </div>
-            <h3 className="card-title">Tim Pengawalan & Anggaran</h3>
+            <h3 className="card-title">Evaluasi Usaha & Sinergi Supervisi</h3>
           </div>
 
           <div className="card-body">
-            <div className="info-row">
-              <span className="info-label">Tim Supervisi Langsung:</span>
-              <span className="info-value highlight-badge">{p.timPengawalan || 'Belum Ditentukan'}</span>
-            </div>
-
-            <div className="info-row">
-              <span className="info-label">Jadwal Pelaksanaan:</span>
-              <span className="info-value font-medium">{p.tanggal || '-'}</span>
-            </div>
-
-            <div className="info-row">
-              <span className="info-label">Alokasi Anggaran (RAB):</span>
-              <span className="info-value text-primary font-bold">
-                {typeof p.rab === 'number' 
-                  ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(p.rab)
-                  : (p.rab || '-')}
-              </span>
-            </div>
+            {p.tanggal && (
+              <div className="info-row">
+                <span className="info-label">Jadwal Supervisi:</span>
+                <span className="info-value font-medium">{p.tanggal}</span>
+              </div>
+            )}
 
             {p.keterangan && (
               <div className="info-callout">
