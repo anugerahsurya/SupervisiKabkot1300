@@ -2,7 +2,7 @@
  * Service to interact with Google Apps Script Web App (Spreadsheet Database)
  */
 
-const STORAGE_KEY_GAS_URL = 'se2026_gas_webapp_url';
+const STORAGE_KEY_GAS_URL = 'https://script.google.com/macros/s/AKfycbxxWkEtQFhyWUuMek-cwyEhRxeLCnrwWfYl7UuremdimMaKPv95_GKZKr44UcJqKsT_/exec';
 
 export const getGasUrl = () => {
   return localStorage.getItem(STORAGE_KEY_GAS_URL) || '';
