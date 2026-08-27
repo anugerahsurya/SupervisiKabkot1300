@@ -18,6 +18,7 @@ import {
   Users, 
   Briefcase, 
   TrendingUp, 
+  Clock,
   Download 
 } from 'lucide-react';
 import { exportToExcel } from '../services/excelService';
@@ -150,8 +151,9 @@ export default function PrelistTableSection({
       const isNumericField = [
         'prelistKeluargaTot', 'prelistKeluargaSub', 'prelistKeluargaPct',
         'prelistUsahaTot', 'prelistUsahaSub', 'prelistUsahaPct',
-        'totPrelistTot', 'totPrelistSub', 'totPrelistPct',
-        'totBeban', 'totSubmit', 'totPct', 'deltaJml', 'deltaPct'
+        'totPrelistTot', 'totPrelistSub', 'totPrelistPct', 'prelistOpenDraft',
+        'totAbTot', 'totAbSub', 'totAbPct', 'abOpenDraft',
+        'totBeban', 'totSubmit', 'totOpenDraft', 'totPct', 'deltaJml', 'deltaPct'
       ].includes(sortField);
 
       if (isNumericField || typeof aVal === 'number' || typeof bVal === 'number') {
@@ -199,6 +201,7 @@ export default function PrelistTableSection({
   const summary = useMemo(() => {
     let totBeban = 0;
     let totSubmit = 0;
+    let totOpenDraft = 0;
     let totKlgBeban = 0;
     let totKlgSub = 0;
     let totUshBeban = 0;
@@ -207,6 +210,7 @@ export default function PrelistTableSection({
     filteredData.forEach(d => {
       totBeban += Number(d.totBeban || 0);
       totSubmit += Number(d.totSubmit || 0);
+      totOpenDraft += Number(d.totOpenDraft !== undefined ? d.totOpenDraft : Math.max(0, (d.totBeban || 0) - (d.totSubmit || 0)));
       totKlgBeban += Number(d.prelistKeluargaTot || 0);
       totKlgSub += Number(d.prelistKeluargaSub || 0);
       totUshBeban += Number(d.prelistUsahaTot || 0);
@@ -221,6 +225,7 @@ export default function PrelistTableSection({
       count: filteredData.length,
       totBeban,
       totSubmit,
+      totOpenDraft,
       totPct,
       totKlgBeban,
       totKlgSub,
@@ -293,7 +298,7 @@ export default function PrelistTableSection({
           <div className="stat-pill-body">
             <span className="stat-pill-title">Total Sub SLS</span>
             <span className="stat-pill-num">{summary.count.toLocaleString('id-ID')}</span>
-            <span className="stat-pill-sub">Terfilter dari {prelistData.length.toLocaleString('id-ID')}</span>
+            <span className="stat-pill-sub">Terfilter dari {prelistData.length.toLocaleString('id-ID')} Sub SLS</span>
           </div>
         </div>
 
@@ -302,9 +307,9 @@ export default function PrelistTableSection({
             <TrendingUp size={18} className="text-success" />
           </div>
           <div className="stat-pill-body">
-            <span className="stat-pill-title">Capaian Total Keseluruhan</span>
+            <span className="stat-pill-title">Sudah Submit (Selesai)</span>
             <div className="stat-pill-num-row">
-              <span className="stat-pill-num">{summary.totPct.toFixed(2)}%</span>
+              <span className="stat-pill-num text-success">{summary.totPct.toFixed(2)}%</span>
               <span className="stat-pill-fraction">({summary.totSubmit.toLocaleString('id-ID')} / {summary.totBeban.toLocaleString('id-ID')})</span>
             </div>
             <div className="mini-progress-track">
@@ -314,34 +319,40 @@ export default function PrelistTableSection({
         </div>
 
         <div className="stat-pill-card">
-          <div className="stat-pill-icon bg-info-subtle">
-            <Users size={18} className="text-info" />
+          <div className="stat-pill-icon bg-warning-subtle">
+            <Clock size={18} className="text-warning" />
           </div>
           <div className="stat-pill-body">
-            <span className="stat-pill-title">Prelist Keluarga</span>
+            <span className="stat-pill-title">Open / Draft (Sisa Beban)</span>
             <div className="stat-pill-num-row">
-              <span className="stat-pill-num">{summary.klgPct.toFixed(2)}%</span>
-              <span className="stat-pill-fraction">({summary.totKlgSub.toLocaleString('id-ID')} / {summary.totKlgBeban.toLocaleString('id-ID')})</span>
+              <span className={`stat-pill-num ${summary.totOpenDraft > 0 ? 'text-warning' : 'text-muted'}`}>
+                {summary.totOpenDraft.toLocaleString('id-ID')}
+              </span>
+              <span className="stat-pill-fraction">Unit</span>
             </div>
-            <span className="stat-pill-sub">Submit Keluarga</span>
+            <span className="stat-pill-sub">
+              {summary.totOpenDraft > 0 ? `${(100 - summary.totPct).toFixed(2)}% belum disubmit` : 'Semua Sub SLS tuntas'}
+            </span>
           </div>
         </div>
 
         <div className="stat-pill-card">
-          <div className="stat-pill-icon bg-warning-subtle">
-            <Briefcase size={18} className="text-warning" />
+          <div className="stat-pill-icon bg-info-subtle">
+            <Users size={18} className="text-info" />
           </div>
           <div className="stat-pill-body">
-            <span className="stat-pill-title">Prelist Usaha</span>
+            <span className="stat-pill-title">Prelist Keluarga & Usaha</span>
             <div className="stat-pill-num-row">
-              <span className="stat-pill-num">{summary.ushPct.toFixed(2)}%</span>
-              <span className="stat-pill-fraction">({summary.totUshSub.toLocaleString('id-ID')} / {summary.totUshBeban.toLocaleString('id-ID')})</span>
+              <span className="stat-pill-num text-main">{summary.klgPct.toFixed(1)}% Klg</span>
+              <span className="stat-pill-fraction">/ {summary.ushPct.toFixed(1)}% Ush</span>
             </div>
-            <span className="stat-pill-sub">Submit Usaha</span>
+            <span className="stat-pill-sub">Submit Klg ({summary.totKlgSub.toLocaleString('id-ID')}) • Ush ({summary.totUshSub.toLocaleString('id-ID')})</span>
           </div>
         </div>
 
-      </div>      {/* Filter & Search Toolbar (Like BPS Zoom Reference) */}
+      </div>
+
+      {/* Filter & Search Toolbar (Like BPS Zoom Reference) */}
       <div className="table-toolbar">
         
         {/* Search Box */}
@@ -434,7 +445,7 @@ export default function PrelistTableSection({
         <table className="custom-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('kdSubSls')} className="sortable-th" style={{ width: '55px' }} title="Urutkan berdasarkan Nomor / Urutan">
+              <th onClick={() => handleSort('kdSubSls')} className="sortable-th" style={{ width: '50px' }} title="Urutkan berdasarkan Nomor / Urutan">
                 <div className="th-content justify-center">
                   <span>No</span>
                   {renderSortIcon('kdSubSls')}
@@ -458,28 +469,34 @@ export default function PrelistTableSection({
                   {renderSortIcon('nmSubSls')}
                 </div>
               </th>
+              <th onClick={() => handleSort('totBeban')} className="sortable-th text-right" title="Urutkan berdasarkan Total Beban">
+                <div className="th-content justify-end">
+                  <span>Beban</span>
+                  {renderSortIcon('totBeban')}
+                </div>
+              </th>
+              <th onClick={() => handleSort('totSubmit')} className="sortable-th text-right" title="Urutkan berdasarkan Sudah Submit">
+                <div className="th-content justify-end">
+                  <span>Submit</span>
+                  {renderSortIcon('totSubmit')}
+                </div>
+              </th>
+              <th onClick={() => handleSort('totOpenDraft')} className="sortable-th text-center" title="Urutkan berdasarkan Sisa Open / Draft">
+                <div className="th-content justify-center">
+                  <span>Open / Draft</span>
+                  {renderSortIcon('totOpenDraft')}
+                </div>
+              </th>
               <th onClick={() => handleSort('prelistKeluargaSub')} className="sortable-th text-center" title="Urutkan berdasarkan Submit Prelist Keluarga">
                 <div className="th-content justify-center">
-                  <span>Prelist Keluarga</span>
+                  <span>Prelist Klg</span>
                   {renderSortIcon('prelistKeluargaSub')}
                 </div>
               </th>
               <th onClick={() => handleSort('prelistUsahaSub')} className="sortable-th text-center" title="Urutkan berdasarkan Submit Prelist Usaha">
                 <div className="th-content justify-center">
-                  <span>Prelist Usaha</span>
+                  <span>Prelist Ush</span>
                   {renderSortIcon('prelistUsahaSub')}
-                </div>
-              </th>
-              <th onClick={() => handleSort('totBeban')} className="sortable-th text-right" title="Urutkan berdasarkan Total Beban Keseluruhan">
-                <div className="th-content justify-end">
-                  <span>Total Beban</span>
-                  {renderSortIcon('totBeban')}
-                </div>
-              </th>
-              <th onClick={() => handleSort('totSubmit')} className="sortable-th text-right" title="Urutkan berdasarkan Total Submit">
-                <div className="th-content justify-end">
-                  <span>Total Submit</span>
-                  {renderSortIcon('totSubmit')}
                 </div>
               </th>
               <th onClick={() => handleSort('totPct')} className="sortable-th text-center" title="Urutkan berdasarkan Persentase Capaian">
@@ -490,17 +507,19 @@ export default function PrelistTableSection({
               </th>
               <th onClick={() => handleSort('deltaJml')} className="sortable-th text-center" title="Urutkan berdasarkan Delta Harian">
                 <div className="th-content justify-center">
-                  <span>Delta Harian</span>
+                  <span>Delta</span>
                   {renderSortIcon('deltaJml')}
                 </div>
               </th>
-              <th className="text-center" style={{ width: '80px' }}>Detail</th>
+              <th className="text-center" style={{ width: '70px' }}>Detail</th>
             </tr>
           </thead>
           <tbody>
             {paginatedData.length > 0 ? (
               paginatedData.map((row, idx) => {
                 const globalIdx = (currentPage - 1) * PAGE_SIZE + idx + 1;
+                const openDraft = row.totOpenDraft !== undefined ? row.totOpenDraft : Math.max(0, (row.totBeban || 0) - (row.totSubmit || 0));
+
                 return (
                   <tr key={row.kdSubSls || globalIdx} className="table-data-row">
                     <td className="text-center text-muted font-sm">{globalIdx}</td>
@@ -516,12 +535,18 @@ export default function PrelistTableSection({
                         <span className="sub-sls-code">{row.kdSubSls}</span>
                       </div>
                     </td>
+                    <td className="text-right font-medium">{row.totBeban}</td>
+                    <td className="text-right font-bold text-success">{row.totSubmit}</td>
+                    <td className="text-center">
+                      <span className={`status-tag ${openDraft > 0 ? 'tag-warning font-bold' : 'tag-done'}`}>
+                        {openDraft}
+                      </span>
+                    </td>
                     <td className="text-center">
                       <div className="fraction-cell">
                         <span className="fraction-sub">{row.prelistKeluargaSub}</span>
                         <span className="fraction-div">/</span>
                         <span className="fraction-tot">{row.prelistKeluargaTot}</span>
-                        <span className="fraction-pct">({Math.round((row.prelistKeluargaPct || 0) * 100)}%)</span>
                       </div>
                     </td>
                     <td className="text-center">
@@ -529,11 +554,8 @@ export default function PrelistTableSection({
                         <span className="fraction-sub">{row.prelistUsahaSub}</span>
                         <span className="fraction-div">/</span>
                         <span className="fraction-tot">{row.prelistUsahaTot}</span>
-                        <span className="fraction-pct">({Math.round((row.prelistUsahaPct || 0) * 100)}%)</span>
                       </div>
                     </td>
-                    <td className="text-right font-medium">{row.totBeban}</td>
-                    <td className="text-right font-semibold text-primary">{row.totSubmit}</td>
                     <td className="text-center">
                       {renderCapaianBadge(row.totPct)}
                     </td>
@@ -550,7 +572,7 @@ export default function PrelistTableSection({
                       <button
                         type="button"
                         className="btn-icon-action"
-                        title="Lihat 43 Atribut Kolom Lengkap"
+                        title="Lihat Rincian Open, Draft & Submit Lengkap"
                         onClick={() => onSelectDetail(row)}
                       >
                         <Eye size={16} />
@@ -561,7 +583,7 @@ export default function PrelistTableSection({
               })
             ) : (
               <tr>
-                <td colSpan="11" className="empty-table-cell">
+                <td colSpan="12" className="empty-table-cell">
                   <div className="empty-table-state">
                     <AlertCircle size={32} className="text-muted" />
                     <p className="empty-text">Tidak ada data Sub SLS yang sesuai dengan kriteria filter atau pencarian.</p>

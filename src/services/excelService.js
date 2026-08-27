@@ -15,23 +15,33 @@ export const parseExcelFile = async (file) => {
         const fileName = file.name.toLowerCase();
         const sheetNames = workbook.SheetNames;
 
-        // 1. Check if it is "13 Pengawalan" file
+        // 1. Check if it is SQL Lab UMKM format (sqllab_umkm_rekapitulasi_prelist_dan_assignment_baru...)
+        const firstSheet = workbook.Sheets[sheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        if (rows.length > 0) {
+          const headers = (rows[0] || []).map(h => String(h).toUpperCase());
+          if (headers.includes('KODE_SUB_SLS') && headers.includes('JUMLAH_PRELIST')) {
+            const result = parseSqlLabUmkmSheet(workbook, fileName);
+            resolve({ type: 'prelist', ...result, filename: file.name });
+            return;
+          }
+        }
+
+        // 2. Check if it is "13 Pengawalan" file
         if (fileName.includes('pengawalan') || sheetNames.some(s => s.includes('2026') || s.toLowerCase().includes('sheet3'))) {
           const result = parsePengawalanSheet(workbook);
           resolve({ type: 'pengawalan', data: result, filename: file.name });
           return;
         }
 
-        // 2. Check if it is Rekap Prelist file (1308 or 1376 or general)
+        // 3. Check if it is Rekap Prelist file (1308 or 1376 or general)
         if (fileName.includes('prelist') || sheetNames.some(s => s.toLowerCase().includes('rekap'))) {
           const result = parsePrelistSheet(workbook, fileName);
           resolve({ type: 'prelist', ...result, filename: file.name });
           return;
         }
 
-        // Fallback: try inspecting the active/first sheet
-        const firstSheet = workbook.Sheets[sheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        // Fallback: try inspecting header contents
         if (rows.length > 0) {
           const headerStr = JSON.stringify(rows[0] || []).toLowerCase();
           if (headerStr.includes('kabupaten') && headerStr.includes('sls')) {
@@ -136,6 +146,127 @@ function mapPengawalanRow(row, defaultCode, defaultName) {
 }
 
 /**
+ * Parser for SQL Lab UMKM files (sqllab_umkm_rekapitulasi_prelist_dan_assignment_baru...)
+ */
+function parseSqlLabUmkmSheet(workbook, fileName) {
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  const prelistRows = [];
+  let detectedKab = fileName.includes('1376') ? '1376' : '1308';
+
+  rows.forEach((r) => {
+    const kdSub = String(r['KODE_SUB_SLS'] || '').trim();
+    if (!kdSub || kdSub.length < 10) return;
+
+    const kdKab = kdSub.slice(0, 4);
+    if (kdKab === '1376' || kdKab === '1308') {
+      detectedKab = kdKab;
+    }
+
+    const totPrelist = Number(r['JUMLAH_PRELIST']) || 0;
+    const plOpenDraft = Number(r['JUMLAH_PRELIST_OPEN_DRAFT']) || 0;
+    const plSubmit = Number(r['JUMLAH_PRELIST_SELAIN_OPEN_DRAFT']) || 0;
+
+    const plKlgTot = Number(r['JUMLAH_KELUARGA_PRELIST']) || 0;
+    const plKlgSub = Number(r['KELUARGA_PRELIST_SUBMIT']) || 0;
+    const plUshTot = Number(r['JUMLAH_USAHA_PRELIST']) || 0;
+    const plUshSub = Number(r['USAHA_PRELIST_SUBMIT']) || 0;
+    const plNonTot = Number(r['JUMLAH_NONBKU_PRELIST']) || 0;
+    const plNonSub = Number(r['NONBKU_PRELIST_SUBMIT']) || 0;
+
+    const glUshTot = Number(r['JUMLAH_USAHA_GENERAL_LINK']) || 0;
+    const glUshSub = Number(r['USAHA_GENERAL_LINK_SUBMIT']) || 0;
+    const glKlgTot = Number(r['JUMLAH_KELUARGA_GENERAL_LINK']) || 0;
+    const glKlgSub = Number(r['KELUARGA_GENERAL_LINK_SUBMIT']) || 0;
+
+    const abTot = Number(r['JUMLAH_ASSIGNMENT_BARU']) || 0;
+    const abKlgTot = Number(r['JUMLAH_KELUARGA_BARU']) || 0;
+    const abKlgSub = Number(r['KELUARGA_BARU_SUBMIT']) || 0;
+    const abUshTot = Number(r['JUMLAH_USAHA_BARU']) || 0;
+    const abUshSub = Number(r['USAHA_BARU_SUBMIT']) || 0;
+    const abNonTot = Number(r['JUMLAH_NONBKU_BARU']) || 0;
+    const abNonSub = Number(r['NONBKU_BARU_SUBMIT']) || 0;
+
+    const abSub = abKlgSub + abUshSub + abNonSub;
+    const abDraft = Number(r['JUMLAH_BARU_STATUS_DRAFT']) || 0;
+    const abOpenDraft = Math.max(0, abTot - abSub);
+
+    const totBeban = totPrelist + abTot;
+    const totSubmit = plSubmit + abSub;
+    const totOpenDraft = plOpenDraft + abOpenDraft;
+    const totPct = totBeban > 0 ? totSubmit / totBeban : 1;
+
+    prelistRows.push({
+      kdKab: kdKab,
+      nmKab: kdKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota',
+      kdKec: kdSub.slice(0, 7),
+      nmKec: '',
+      kdDesa: kdSub.slice(0, 10),
+      nmDesa: '',
+      kdSubSls: kdSub,
+      nmSubSls: `Sub SLS [${kdSub.slice(-2)}]`,
+
+      prelistKeluargaTot: plKlgTot,
+      prelistKeluargaSub: plKlgSub,
+      prelistKeluargaPct: plKlgTot > 0 ? plKlgSub / plKlgTot : 1,
+
+      prelistUsahaTot: plUshTot,
+      prelistUsahaSub: plUshSub,
+      prelistUsahaPct: plUshTot > 0 ? plUshSub / plUshTot : 1,
+
+      prelistNonBkuTot: plNonTot,
+      prelistNonBkuSub: plNonSub,
+      prelistNonBkuPct: plNonTot > 0 ? plNonSub / plNonTot : 1,
+
+      totPrelistTot: totPrelist,
+      totPrelistSub: plSubmit,
+      totPrelistPct: totPrelist > 0 ? plSubmit / totPrelist : 1,
+      prelistOpenDraft: plOpenDraft,
+
+      glKeluargaTot: glKlgTot,
+      glKeluargaSub: glKlgSub,
+      glKeluargaPct: glKlgTot > 0 ? glKlgSub / glKlgTot : 1,
+
+      glUsahaTot: glUshTot,
+      glUsahaSub: glUshSub,
+      glUsahaPct: glUshTot > 0 ? glUshSub / glUshTot : 1,
+
+      abKeluargaTot: abKlgTot,
+      abKeluargaSub: abKlgSub,
+      abKeluargaPct: abKlgTot > 0 ? abKlgSub / abKlgTot : 1,
+
+      abUsahaTot: abUshTot,
+      abUsahaSub: abUshSub,
+      abUsahaPct: abUshTot > 0 ? abUshSub / abUshTot : 1,
+
+      abNonBkuTot: abNonTot,
+      abNonBkuSub: abNonSub,
+      abNonBkuPct: abNonTot > 0 ? abNonSub / abNonTot : 1,
+
+      totAbTot: abTot,
+      totAbSub: abSub,
+      totAbPct: abTot > 0 ? abSub / abTot : 1,
+      abDraft: abDraft,
+      abOpenDraft: abOpenDraft,
+
+      totBeban: totBeban,
+      totSubmit: totSubmit,
+      totOpenDraft: totOpenDraft,
+      totPct: totPct,
+      deltaJml: 0,
+      deltaPct: 0,
+      dummy: Number(r['JUMLAH_DUMMY']) || 0
+    });
+  });
+
+  return {
+    targetKab: detectedKab,
+    data: prelistRows
+  };
+}
+
+/**
  * Parser for Rekap Prelist Excel
  */
 function parsePrelistSheet(workbook, fileName) {
@@ -158,6 +289,10 @@ function parsePrelistSheet(workbook, fileName) {
       detectedKab = kdKab;
     }
 
+    const totBeban = Number(row[38]) || 0;
+    const totSubmit = Number(row[39]) || 0;
+    const totOpenDraft = Math.max(0, totBeban - totSubmit);
+
     prelistRows.push({
       kdKab: kdKab,
       nmKab: String(row[1] || (detectedKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota')),
@@ -179,6 +314,7 @@ function parsePrelistSheet(workbook, fileName) {
       totPrelistTot: Number(row[17]) || 0,
       totPrelistSub: Number(row[18]) || 0,
       totPrelistPct: Number(row[19]) || 0,
+      prelistOpenDraft: Math.max(0, (Number(row[17]) || 0) - (Number(row[18]) || 0)),
       glKeluargaTot: Number(row[20]) || 0,
       glKeluargaSub: Number(row[21]) || 0,
       glKeluargaPct: Number(row[22]) || 0,
@@ -197,8 +333,10 @@ function parsePrelistSheet(workbook, fileName) {
       totAbTot: Number(row[35]) || 0,
       totAbSub: Number(row[36]) || 0,
       totAbPct: Number(row[37]) || 0,
-      totBeban: Number(row[38]) || 0,
-      totSubmit: Number(row[39]) || 0,
+      abOpenDraft: Math.max(0, (Number(row[35]) || 0) - (Number(row[36]) || 0)),
+      totBeban: totBeban,
+      totSubmit: totSubmit,
+      totOpenDraft: totOpenDraft,
       totPct: Number(row[40]) || 0,
       deltaJml: Number(row[41]) || 0,
       deltaPct: Number(row[42]) || 0,
