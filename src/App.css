@@ -1640,11 +1640,52 @@ html, body {
   color: var(--text-main);
 }
 
-.detail-grid-4 {
+.detail-grid-4,
+.detail-grid-5 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px;
   width: 100%;
+}
+
+.highlight-user-box {
+  background: var(--primary-50);
+  border-color: var(--border-accent);
+}
+
+.detail-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.detail-user-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.user-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--primary-50);
+  border: 1px solid var(--border-accent);
+  color: var(--primary-dark);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.74rem;
+  font-weight: 600;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .detail-box {

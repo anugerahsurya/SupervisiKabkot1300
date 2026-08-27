@@ -334,7 +334,8 @@ function mapRowToObject(headers, row, kdSub, kdKab) {
     totPct: totPct,
     deltaJml: 0,
     deltaPct: 0,
-    dummy: getNum('JUMLAH_DUMMY')
+    dummy: getNum('JUMLAH_DUMMY'),
+    username: String(d['CURRENT_USER_USERNAME'] || d['USERNAME'] || d['D.USERNAME'] || d['PETUGAS'] || d['PPL'] || '').trim()
   };
 }
 

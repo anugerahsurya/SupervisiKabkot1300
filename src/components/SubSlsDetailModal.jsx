@@ -8,6 +8,7 @@ import {
   CheckCircle,
   Clock,
   CircleDot,
+  User,
   FileSpreadsheet
 } from 'lucide-react';
 
@@ -92,7 +93,7 @@ export default function SubSlsDetailModal({ data, onClose }) {
               <span>Identitas Wilayah Administrasi</span>
             </h4>
 
-            <div className="detail-grid-4">
+            <div className="detail-grid-5">
               <div className="detail-box">
                 <span className="detail-box-label">Kabupaten / Kota</span>
                 <span className="detail-box-value">{data.nmKab} ({data.kdKab})</span>
@@ -112,6 +113,18 @@ export default function SubSlsDetailModal({ data, onClose }) {
                 <span className="detail-box-label">Kode & Nama SLS / Sub SLS</span>
                 <span className="detail-box-value">{data.nmSubSls}</span>
                 <span className="detail-box-code">{data.kdSubSls}</span>
+              </div>
+
+              <div className="detail-box highlight-user-box">
+                <span className="detail-box-label">Petugas / PPL</span>
+                {data.username ? (
+                  <div className="detail-user-pill">
+                    <User size={13} className="text-primary" />
+                    <span className="detail-user-name">{data.username}</span>
+                  </div>
+                ) : (
+                  <span className="detail-box-value text-muted">-</span>
+                )}
               </div>
             </div>
           </div>

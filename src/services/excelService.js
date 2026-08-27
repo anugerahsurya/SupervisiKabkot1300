@@ -170,6 +170,14 @@ function parseSqlLabUmkmFast(sheet, headerRow) {
   const idxAbNonBkuSub = headers.indexOf('NONBKU_BARU_SUBMIT');
   const idxAbOpen = headers.indexOf('JUMLAH_BARU_OPEN');
   const idxAbDraft = headers.indexOf('JUMLAH_BARU_DRAFT') !== -1 ? headers.indexOf('JUMLAH_BARU_DRAFT') : headers.indexOf('JUMLAH_BARU_STATUS_DRAFT');
+  const idxUsername = headers.findIndex(h => 
+    h === 'CURRENT_USER_USERNAME' || 
+    h === 'USERNAME' || 
+    h === 'D.USERNAME' || 
+    h === 'PETUGAS' || 
+    h === 'PPL' ||
+    h.includes('USERNAME')
+  );
 
   const list1308 = [];
   const list1376 = [];
@@ -180,6 +188,12 @@ function parseSqlLabUmkmFast(sheet, headerRow) {
     if (val === null || val === undefined || val === '' || val === '-') return 0;
     const n = Number(val);
     return isNaN(n) ? 0 : n;
+  };
+
+  const getStr = (row, idx) => {
+    if (idx === -1 || idx >= row.length) return '';
+    const val = row[idx];
+    return val !== null && val !== undefined ? String(val).trim() : '';
   };
 
   for (let r = 1; r < rawRows.length; r++) {
@@ -196,6 +210,7 @@ function parseSqlLabUmkmFast(sheet, headerRow) {
 
     const kdKab = is1376 ? '1376' : '1308';
     const masterInfo = masterWilayahMap[kdSub] || {};
+    const username = getStr(row, idxUsername);
 
     const totPrelist = getNum(row, idxJmlPrelist);
     const plOpen = idxPrelistOpen !== -1 ? getNum(row, idxPrelistOpen) : 0;
@@ -303,7 +318,8 @@ function parseSqlLabUmkmFast(sheet, headerRow) {
       totPct: totPct,
       deltaJml: 0,
       deltaPct: 0,
-      dummy: getNum(row, idxDummy)
+      dummy: getNum(row, idxDummy),
+      username: username || ''
     };
 
     if (is1308) {

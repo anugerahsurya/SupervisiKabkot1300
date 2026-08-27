@@ -40,11 +40,6 @@ export default function Navbar({
               <span className="brand-text">SE2026 • BPS SUMBAR</span>
             </div>
 
-            <div className="cloud-status-pill">
-              <span className="live-dot"></span>
-              <span>GAS Cloud</span>
-            </div>
-
             {lastUpdated && (
               <div className="last-sync-pill">
                 <CheckCircle2 size={12} className="sync-icon-ok" />

@@ -20,6 +20,7 @@ import {
   TrendingUp, 
   Clock,
   CircleDot,
+  User,
   Download 
 } from 'lucide-react';
 import { exportToExcel } from '../services/excelService';
@@ -125,7 +126,8 @@ export default function PrelistTableSection({
         const matchDesa = (item.nmDesa || '').toLowerCase().includes(term);
         const matchSls = (item.nmSubSls || '').toLowerCase().includes(term);
         const matchKd = (item.kdSubSls || '').toLowerCase().includes(term);
-        if (!matchKec && !matchDesa && !matchSls && !matchKd) return false;
+        const matchUser = (item.username || '').toLowerCase().includes(term);
+        if (!matchKec && !matchDesa && !matchSls && !matchKd && !matchUser) return false;
       }
 
       // Kecamatan filter
@@ -497,6 +499,12 @@ export default function PrelistTableSection({
                   {renderSortIcon('nmSubSls')}
                 </div>
               </th>
+              <th onClick={() => handleSort('username')} className="sortable-th" title="Urutkan berdasarkan Username Petugas / PPL">
+                <div className="th-content">
+                  <span>Petugas</span>
+                  {renderSortIcon('username')}
+                </div>
+              </th>
               <th onClick={() => handleSort('totBeban')} className="sortable-th text-right" title="Urutkan berdasarkan Total Beban">
                 <div className="th-content justify-end">
                   <span>Beban</span>
@@ -570,6 +578,16 @@ export default function PrelistTableSection({
                         <span className="sub-sls-code">{row.kdSubSls}</span>
                       </div>
                     </td>
+                    <td>
+                      {row.username ? (
+                        <div className="user-badge-pill" title={`Petugas: ${row.username}`}>
+                          <User size={12} className="text-primary" />
+                          <span className="user-name-text">{row.username}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted font-sm">-</span>
+                      )}
+                    </td>
                     <td className="text-right font-medium">{row.totBeban}</td>
                     <td className="text-right font-bold text-success">{row.totSubmit}</td>
                     <td className="text-center">
@@ -623,7 +641,7 @@ export default function PrelistTableSection({
               })
             ) : (
               <tr>
-                <td colSpan="13" className="empty-table-cell">
+                <td colSpan="14" className="empty-table-cell">
                   <div className="empty-table-state">
                     <AlertCircle size={32} className="text-muted" />
                     <p className="empty-text">Tidak ada data Sub SLS yang sesuai dengan kriteria filter atau pencarian.</p>
