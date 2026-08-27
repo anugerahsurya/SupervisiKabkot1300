@@ -5,7 +5,7 @@ function isValidUsername(str) {
   if (!str) return false;
   var s = String(str).trim();
   if (!s || s === '-' || s === 'null' || s === 'undefined') return false;
-  // If purely numeric ID (e.g. 125, 103, 2), reject it
+  // If purely numeric ID or count (e.g. 125, 212, 103, 2), reject it
   if (!isNaN(Number(s))) return false;
   return true;
 }
@@ -14,7 +14,7 @@ export function enrichPrelistWithMaster(list, defaultKdKab) {
   if (!defaultKdKab) defaultKdKab = '1376';
   if (!Array.isArray(list)) return [];
 
-  var mapBySub = {};
+  var bySub = {};
   var order = [];
 
   list.forEach(function(item) {
@@ -22,131 +22,121 @@ export function enrichPrelistWithMaster(list, defaultKdKab) {
     var kdSub = String(item.kdSubSls || '').trim();
     if (!kdSub) return;
 
-    var master = masterWilayahMap[kdSub] || {};
-    var is1376 = kdSub.startsWith('1376');
-    var kdKab = item.kdKab || master.kdKab || defaultKdKab || (is1376 ? '1376' : '1308');
-    var nmKab = (item.nmKab && item.nmKab.trim() !== '') ? item.nmKab : (master.nmKab || (kdKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota'));
-    var nmKec = (item.nmKec && item.nmKec.trim() !== '') ? item.nmKec : (master.nmKec || ('Kecamatan [' + kdSub.slice(4, 7) + ']'));
-    var nmDesa = (item.nmDesa && item.nmDesa.trim() !== '') ? item.nmDesa : (master.nmDesa || ('Desa [' + kdSub.slice(7, 10) + ']'));
-    var nmSubSls = (item.nmSubSls && item.nmSubSls.trim() !== '' && item.nmSubSls.indexOf('Sub SLS [') !== 0) 
-      ? item.nmSubSls 
-      : (master.nmSubSls || item.nmSubSls || ('Sub SLS [' + kdSub.slice(-2) + ']'));
-
-    var userStr = String(item.username || '').trim();
-
-    if (!mapBySub[kdSub]) {
+    if (!bySub[kdSub]) {
+      bySub[kdSub] = [];
       order.push(kdSub);
-      var initialUsernames = [];
-      if (userStr) {
-        userStr.split(',').forEach(function(u) {
-          var clean = u.trim();
-          if (isValidUsername(clean) && initialUsernames.indexOf(clean) === -1) {
-            initialUsernames.push(clean);
-          }
-        });
-      }
-
-      mapBySub[kdSub] = Object.assign({}, item, {
-        kdKab: kdKab,
-        nmKab: nmKab,
-        kdKec: item.kdKec || master.kdKec || kdSub.slice(0, 7),
-        nmKec: nmKec,
-        kdDesa: item.kdDesa || master.kdDesa || kdSub.slice(0, 10),
-        nmDesa: nmDesa,
-        kdSubSls: kdSub,
-        nmSubSls: nmSubSls,
-        usernames: initialUsernames,
-        username: initialUsernames.join(', '),
-        
-        totBeban: Number(item.totBeban) || 0,
-        totSubmit: Number(item.totSubmit) || 0,
-        totDraft: Number(item.totDraft) || 0,
-        totOpen: Number(item.totOpen) || 0,
-        totOpenDraft: (Number(item.totOpen) || 0) + (Number(item.totDraft) || 0),
-
-        prelistKeluargaTot: Number(item.prelistKeluargaTot) || 0,
-        prelistKeluargaSub: Number(item.prelistKeluargaSub) || 0,
-        prelistUsahaTot: Number(item.prelistUsahaTot) || 0,
-        prelistUsahaSub: Number(item.prelistUsahaSub) || 0,
-        prelistNonBkuTot: Number(item.prelistNonBkuTot) || 0,
-        prelistNonBkuSub: Number(item.prelistNonBkuSub) || 0,
-
-        totPrelistTot: Number(item.totPrelistTot) || 0,
-        totPrelistSub: Number(item.totPrelistSub) || 0,
-        prelistOpen: Number(item.prelistOpen) || 0,
-        prelistDraft: Number(item.prelistDraft) || 0,
-
-        abKeluargaTot: Number(item.abKeluargaTot) || 0,
-        abKeluargaSub: Number(item.abKeluargaSub) || 0,
-        abUsahaTot: Number(item.abUsahaTot) || 0,
-        abUsahaSub: Number(item.abUsahaSub) || 0,
-        abNonBkuTot: Number(item.abNonBkuTot) || 0,
-        abNonBkuSub: Number(item.abNonBkuSub) || 0,
-
-        totAbTot: Number(item.totAbTot) || 0,
-        totAbSub: Number(item.totAbSub) || 0,
-        abOpen: Number(item.abOpen) || 0,
-        abDraft: Number(item.abDraft) || 0,
-        dummy: Number(item.dummy) || 0,
-        deltaJml: Number(item.deltaJml) || 0
-      });
-    } else {
-      var existing = mapBySub[kdSub];
-      if (userStr) {
-        userStr.split(',').forEach(function(u) {
-          var clean = u.trim();
-          if (isValidUsername(clean) && existing.usernames.indexOf(clean) === -1) {
-            existing.usernames.push(clean);
-          }
-        });
-        existing.username = existing.usernames.join(', ');
-      }
-
-      existing.totBeban += Number(item.totBeban) || 0;
-      existing.totSubmit += Number(item.totSubmit) || 0;
-      existing.totDraft += Number(item.totDraft) || 0;
-      existing.totOpen += Number(item.totOpen) || 0;
-      existing.totOpenDraft = existing.totDraft + existing.totOpen;
-
-      existing.prelistKeluargaTot += Number(item.prelistKeluargaTot) || 0;
-      existing.prelistKeluargaSub += Number(item.prelistKeluargaSub) || 0;
-      existing.prelistUsahaTot += Number(item.prelistUsahaTot) || 0;
-      existing.prelistUsahaSub += Number(item.prelistUsahaSub) || 0;
-      existing.prelistNonBkuTot += Number(item.prelistNonBkuTot) || 0;
-      existing.prelistNonBkuSub += Number(item.prelistNonBkuSub) || 0;
-
-      existing.totPrelistTot += Number(item.totPrelistTot) || 0;
-      existing.totPrelistSub += Number(item.totPrelistSub) || 0;
-      existing.prelistOpen += Number(item.prelistOpen) || 0;
-      existing.prelistDraft += Number(item.prelistDraft) || 0;
-
-      existing.abKeluargaTot += Number(item.abKeluargaTot) || 0;
-      existing.abKeluargaSub += Number(item.abKeluargaSub) || 0;
-      existing.abUsahaTot += Number(item.abUsahaTot) || 0;
-      existing.abUsahaSub += Number(item.abUsahaSub) || 0;
-      existing.abNonBkuTot += Number(item.abNonBkuTot) || 0;
-      existing.abNonBkuSub += Number(item.abNonBkuSub) || 0;
-
-      existing.totAbTot += Number(item.totAbTot) || 0;
-      existing.totAbSub += Number(item.totAbSub) || 0;
-      existing.abOpen += Number(item.abOpen) || 0;
-      existing.abDraft += Number(item.abDraft) || 0;
-      existing.dummy += Number(item.dummy) || 0;
-      existing.deltaJml += Number(item.deltaJml) || 0;
     }
+    bySub[kdSub].push(item);
   });
 
   return order.map(function(kdSub) {
-    var rec = mapBySub[kdSub];
-    rec.totPct = rec.totBeban > 0 ? (rec.totSubmit / rec.totBeban) : 1;
-    rec.totPrelistPct = rec.totPrelistTot > 0 ? (rec.totPrelistSub / rec.totPrelistTot) : 1;
-    rec.prelistKeluargaPct = rec.prelistKeluargaTot > 0 ? (rec.prelistKeluargaSub / rec.prelistKeluargaTot) : 1;
-    rec.prelistUsahaPct = rec.prelistUsahaTot > 0 ? (rec.prelistUsahaSub / rec.prelistUsahaTot) : 1;
-    rec.prelistNonBkuPct = rec.prelistNonBkuTot > 0 ? (rec.prelistNonBkuSub / rec.prelistNonBkuTot) : 1;
-    rec.totAbPct = rec.totAbTot > 0 ? (rec.totAbSub / rec.totAbTot) : 1;
-    rec.abKeluargaPct = rec.abKeluargaTot > 0 ? (rec.abKeluargaSub / rec.abKeluargaTot) : 1;
-    rec.abUsahaPct = rec.abUsahaTot > 0 ? (rec.abUsahaSub / rec.abUsahaTot) : 1;
-    rec.abNonBkuPct = rec.abNonBkuTot > 0 ? (rec.abNonBkuSub / rec.abNonBkuTot) : 1;
-    return rec;
+    var rows = bySub[kdSub];
+    var master = masterWilayahMap[kdSub] || {};
+    var is1376 = kdSub.startsWith('1376');
+    var kdKab = rows[0].kdKab || master.kdKab || defaultKdKab || (is1376 ? '1376' : '1308');
+    var nmKab = (rows[0].nmKab && rows[0].nmKab.trim() !== '') ? rows[0].nmKab : (master.nmKab || (kdKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota'));
+    var nmKec = (rows[0].nmKec && rows[0].nmKec.trim() !== '') ? rows[0].nmKec : (master.nmKec || ('Kecamatan [' + kdSub.slice(4, 7) + ']'));
+    var nmDesa = (rows[0].nmDesa && rows[0].nmDesa.trim() !== '') ? rows[0].nmDesa : (master.nmDesa || ('Desa [' + kdSub.slice(7, 10) + ']'));
+    var nmSubSls = (rows[0].nmSubSls && rows[0].nmSubSls.trim() !== '' && rows[0].nmSubSls.indexOf('Sub SLS [') !== 0) 
+      ? rows[0].nmSubSls 
+      : (master.nmSubSls || rows[0].nmSubSls || ('Sub SLS [' + kdSub.slice(-2) + ']'));
+
+    var realUserRows = rows.filter(function(r) {
+      return isValidUsername(r.username);
+    });
+
+    var primary;
+    var usernames = [];
+
+    if (realUserRows.length > 0) {
+      if (realUserRows.length === 1) {
+        primary = Object.assign({}, realUserRows[0]);
+        usernames = [String(realUserRows[0].username).trim()];
+      } else {
+        primary = Object.assign({}, realUserRows[0]);
+        usernames = [];
+        realUserRows.forEach(function(r) {
+          var u = String(r.username || '').trim();
+          if (u && usernames.indexOf(u) === -1) usernames.push(u);
+        });
+        for (var i = 1; i < realUserRows.length; i++) {
+          var r = realUserRows[i];
+          primary.totBeban = (Number(primary.totBeban) || 0) + (Number(r.totBeban) || 0);
+          primary.totSubmit = (Number(primary.totSubmit) || 0) + (Number(r.totSubmit) || 0);
+          primary.totDraft = (Number(primary.totDraft) || 0) + (Number(r.totDraft) || 0);
+          primary.totOpen = (Number(primary.totOpen) || 0) + (Number(r.totOpen) || 0);
+          primary.prelistUsahaSub = (Number(primary.prelistUsahaSub) || 0) + (Number(r.prelistUsahaSub) || 0);
+          primary.prelistKeluargaSub = (Number(primary.prelistKeluargaSub) || 0) + (Number(r.prelistKeluargaSub) || 0);
+        }
+      }
+    } else {
+      primary = Object.assign({}, rows[0]);
+      var u = String(primary.username || '').trim();
+      if (isValidUsername(u)) usernames.push(u);
+    }
+
+    var totBeban = Number(primary.totBeban) || 0;
+    var totSubmit = Number(primary.totSubmit) || 0;
+    var totDraft = Number(primary.totDraft) || 0;
+    var totOpen = Number(primary.totOpen) || 0;
+    var totPct = totBeban > 0 ? (totSubmit / totBeban) : 1;
+
+    return Object.assign({}, primary, {
+      kdKab: kdKab,
+      nmKab: nmKab,
+      kdKec: primary.kdKec || master.kdKec || kdSub.slice(0, 7),
+      nmKec: nmKec,
+      kdDesa: primary.kdDesa || master.kdDesa || kdSub.slice(0, 10),
+      nmDesa: nmDesa,
+      kdSubSls: kdSub,
+      nmSubSls: nmSubSls,
+      usernames: usernames,
+      username: usernames.join(', '),
+      
+      totBeban: totBeban,
+      totSubmit: totSubmit,
+      totDraft: totDraft,
+      totOpen: totOpen,
+      totOpenDraft: totDraft + totOpen,
+      totPct: totPct,
+
+      prelistKeluargaTot: Number(primary.prelistKeluargaTot) || 0,
+      prelistKeluargaSub: Number(primary.prelistKeluargaSub) || 0,
+      prelistKeluargaPct: (Number(primary.prelistKeluargaTot) || 0) > 0 ? ((Number(primary.prelistKeluargaSub) || 0) / (Number(primary.prelistKeluargaTot) || 0)) : 1,
+
+      prelistUsahaTot: Number(primary.prelistUsahaTot) || 0,
+      prelistUsahaSub: Number(primary.prelistUsahaSub) || 0,
+      prelistUsahaPct: (Number(primary.prelistUsahaTot) || 0) > 0 ? ((Number(primary.prelistUsahaSub) || 0) / (Number(primary.prelistUsahaTot) || 0)) : 1,
+
+      prelistNonBkuTot: Number(primary.prelistNonBkuTot) || 0,
+      prelistNonBkuSub: Number(primary.prelistNonBkuSub) || 0,
+      prelistNonBkuPct: (Number(primary.prelistNonBkuTot) || 0) > 0 ? ((Number(primary.prelistNonBkuSub) || 0) / (Number(primary.prelistNonBkuTot) || 0)) : 1,
+
+      totPrelistTot: Number(primary.totPrelistTot) || 0,
+      totPrelistSub: Number(primary.totPrelistSub) || 0,
+      totPrelistPct: (Number(primary.totPrelistTot) || 0) > 0 ? ((Number(primary.totPrelistSub) || 0) / (Number(primary.totPrelistTot) || 0)) : 1,
+      prelistOpen: Number(primary.prelistOpen) || 0,
+      prelistDraft: Number(primary.prelistDraft) || 0,
+
+      abKeluargaTot: Number(primary.abKeluargaTot) || 0,
+      abKeluargaSub: Number(primary.abKeluargaSub) || 0,
+      abKeluargaPct: (Number(primary.abKeluargaTot) || 0) > 0 ? ((Number(primary.abKeluargaSub) || 0) / (Number(primary.abKeluargaTot) || 0)) : 1,
+
+      abUsahaTot: Number(primary.abUsahaTot) || 0,
+      abUsahaSub: Number(primary.abUsahaSub) || 0,
+      abUsahaPct: (Number(primary.abUsahaTot) || 0) > 0 ? ((Number(primary.abUsahaSub) || 0) / (Number(primary.abUsahaTot) || 0)) : 1,
+
+      abNonBkuTot: Number(primary.abNonBkuTot) || 0,
+      abNonBkuSub: Number(primary.abNonBkuSub) || 0,
+      abNonBkuPct: (Number(primary.abNonBkuTot) || 0) > 0 ? ((Number(primary.abNonBkuSub) || 0) / (Number(primary.abNonBkuTot) || 0)) : 1,
+
+      totAbTot: Number(primary.totAbTot) || 0,
+      totAbSub: Number(primary.totAbSub) || 0,
+      totAbPct: (Number(primary.totAbTot) || 0) > 0 ? ((Number(primary.totAbSub) || 0) / (Number(primary.totAbTot) || 0)) : 1,
+      abOpen: Number(primary.abOpen) || 0,
+      abDraft: Number(primary.abDraft) || 0,
+      dummy: Number(primary.dummy) || 0,
+      deltaJml: Number(primary.deltaJml) || 0
+    });
   });
 }
