@@ -165,8 +165,14 @@ function parseSqlLabUmkmSheet(workbook, fileName) {
     }
 
     const totPrelist = Number(r['JUMLAH_PRELIST']) || 0;
-    const plOpenDraft = Number(r['JUMLAH_PRELIST_OPEN_DRAFT']) || 0;
-    const plSubmit = Number(r['JUMLAH_PRELIST_SELAIN_OPEN_DRAFT']) || 0;
+    const plOpen = Number(r['JUMLAH_PRELIST_OPEN'] ?? 0);
+    const plDraft = Number(r['JUMLAH_PRELIST_DRAFT'] ?? 0);
+    const plOpenDraft = (r['JUMLAH_PRELIST_OPEN_DRAFT'] !== undefined) 
+      ? Number(r['JUMLAH_PRELIST_OPEN_DRAFT']) 
+      : (plOpen + plDraft);
+    const plSubmit = (r['JUMLAH_PRELIST_SELAIN_OPEN_DRAFT'] !== undefined)
+      ? Number(r['JUMLAH_PRELIST_SELAIN_OPEN_DRAFT'])
+      : Math.max(0, totPrelist - (plOpen + plDraft));
 
     const plKlgTot = Number(r['JUMLAH_KELUARGA_PRELIST']) || 0;
     const plKlgSub = Number(r['KELUARGA_PRELIST_SUBMIT']) || 0;
@@ -189,12 +195,15 @@ function parseSqlLabUmkmSheet(workbook, fileName) {
     const abNonSub = Number(r['NONBKU_BARU_SUBMIT']) || 0;
 
     const abSub = abKlgSub + abUshSub + abNonSub;
-    const abDraft = Number(r['JUMLAH_BARU_STATUS_DRAFT']) || 0;
-    const abOpenDraft = Math.max(0, abTot - abSub);
+    const abOpen = Number(r['JUMLAH_BARU_OPEN'] ?? 0);
+    const abDraft = Number(r['JUMLAH_BARU_DRAFT'] ?? (r['JUMLAH_BARU_STATUS_DRAFT'] ?? 0));
+    const abOpenDraft = abOpen + abDraft;
 
     const totBeban = totPrelist + abTot;
     const totSubmit = plSubmit + abSub;
-    const totOpenDraft = plOpenDraft + abOpenDraft;
+    const totOpen = plOpen + abOpen;
+    const totDraft = plDraft + abDraft;
+    const totOpenDraft = totOpen + totDraft;
     const totPct = totBeban > 0 ? totSubmit / totBeban : 1;
 
     prelistRows.push({
@@ -222,6 +231,8 @@ function parseSqlLabUmkmSheet(workbook, fileName) {
       totPrelistTot: totPrelist,
       totPrelistSub: plSubmit,
       totPrelistPct: totPrelist > 0 ? plSubmit / totPrelist : 1,
+      prelistOpen: plOpen,
+      prelistDraft: plDraft,
       prelistOpenDraft: plOpenDraft,
 
       glKeluargaTot: glKlgTot,
@@ -247,11 +258,14 @@ function parseSqlLabUmkmSheet(workbook, fileName) {
       totAbTot: abTot,
       totAbSub: abSub,
       totAbPct: abTot > 0 ? abSub / abTot : 1,
+      abOpen: abOpen,
       abDraft: abDraft,
       abOpenDraft: abOpenDraft,
 
       totBeban: totBeban,
       totSubmit: totSubmit,
+      totOpen: totOpen,
+      totDraft: totDraft,
       totOpenDraft: totOpenDraft,
       totPct: totPct,
       deltaJml: 0,

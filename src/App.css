@@ -1657,12 +1657,22 @@ html, body {
 .detail-box-value { font-size: 0.82rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
 .detail-box-code { font-size: 0.68rem; color: var(--text-light); font-family: monospace; }
 
-/* Status Comparison Grid (Submit vs Open/Draft) */
-.status-comparison-grid {
+.status-comparison-grid-4 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   width: 100%;
+}
+
+.status-metric-card.border-info {
+  border-color: #bae6fd;
+  background: #f0f9ff;
+}
+
+.status-tag.tag-info {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
 }
 
 .status-metric-card {
@@ -2213,7 +2223,8 @@ html, body {
     grid-template-columns: 1fr;
   }
 
-  .status-comparison-grid {
+  .status-comparison-grid,
+  .status-comparison-grid-4 {
     grid-template-columns: 1fr;
   }
 

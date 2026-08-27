@@ -19,6 +19,7 @@ import {
   Briefcase, 
   TrendingUp, 
   Clock,
+  CircleDot,
   Download 
 } from 'lucide-react';
 import { exportToExcel } from '../services/excelService';
@@ -95,17 +96,22 @@ export default function PrelistTableSection({
   const statusCounts = useMemo(() => {
     let cAll = prelistData.length;
     let c100 = 0;
-    let c90_99 = 0;
+    let cDraft = 0;
+    let cOpen = 0;
     let cLt90 = 0;
 
     prelistData.forEach(d => {
       const pct = (d.totPct !== undefined && d.totPct !== null) ? Number(d.totPct) * 100 : 0;
+      const draft = Number(d.totDraft || 0);
+      const open = Number(d.totOpen || 0);
+
       if (pct >= 100) c100++;
-      else if (pct >= 90) c90_99++;
-      else cLt90++;
+      if (draft > 0) cDraft++;
+      if (open > 0) cOpen++;
+      if (pct < 90) cLt90++;
     });
 
-    return { cAll, c100, c90_99, cLt90 };
+    return { cAll, c100, cDraft, cOpen, cLt90 };
   }, [prelistData]);
 
   // 3. Filter data
@@ -130,7 +136,12 @@ export default function PrelistTableSection({
 
       // Status Capaian filter
       const pct = (item.totPct || 0) * 100;
+      const draft = Number(item.totDraft || 0);
+      const open = Number(item.totOpen || 0);
+
       if (statusFilter === '100' && pct < 100) return false;
+      if (statusFilter === 'DRAFT' && draft === 0) return false;
+      if (statusFilter === 'OPEN' && open === 0) return false;
       if (statusFilter === '90-99' && (pct < 90 || pct >= 100)) return false;
       if (statusFilter === 'LT90' && pct >= 90) return false;
       if (statusFilter === '75-89' && (pct < 75 || pct >= 90)) return false;
@@ -151,9 +162,9 @@ export default function PrelistTableSection({
       const isNumericField = [
         'prelistKeluargaTot', 'prelistKeluargaSub', 'prelistKeluargaPct',
         'prelistUsahaTot', 'prelistUsahaSub', 'prelistUsahaPct',
-        'totPrelistTot', 'totPrelistSub', 'totPrelistPct', 'prelistOpenDraft',
-        'totAbTot', 'totAbSub', 'totAbPct', 'abOpenDraft',
-        'totBeban', 'totSubmit', 'totOpenDraft', 'totPct', 'deltaJml', 'deltaPct'
+        'totPrelistTot', 'totPrelistSub', 'totPrelistPct', 'prelistOpen', 'prelistDraft', 'prelistOpenDraft',
+        'totAbTot', 'totAbSub', 'totAbPct', 'abOpen', 'abDraft', 'abOpenDraft',
+        'totBeban', 'totSubmit', 'totDraft', 'totOpen', 'totOpenDraft', 'totPct', 'deltaJml', 'deltaPct'
       ].includes(sortField);
 
       if (isNumericField || typeof aVal === 'number' || typeof bVal === 'number') {
@@ -201,6 +212,8 @@ export default function PrelistTableSection({
   const summary = useMemo(() => {
     let totBeban = 0;
     let totSubmit = 0;
+    let totDraft = 0;
+    let totOpen = 0;
     let totOpenDraft = 0;
     let totKlgBeban = 0;
     let totKlgSub = 0;
@@ -210,7 +223,9 @@ export default function PrelistTableSection({
     filteredData.forEach(d => {
       totBeban += Number(d.totBeban || 0);
       totSubmit += Number(d.totSubmit || 0);
-      totOpenDraft += Number(d.totOpenDraft !== undefined ? d.totOpenDraft : Math.max(0, (d.totBeban || 0) - (d.totSubmit || 0)));
+      totDraft += Number(d.totDraft || 0);
+      totOpen += Number(d.totOpen || 0);
+      totOpenDraft += Number(d.totOpenDraft !== undefined ? d.totOpenDraft : (Number(d.totDraft || 0) + Number(d.totOpen || 0)));
       totKlgBeban += Number(d.prelistKeluargaTot || 0);
       totKlgSub += Number(d.prelistKeluargaSub || 0);
       totUshBeban += Number(d.prelistUsahaTot || 0);
@@ -225,6 +240,8 @@ export default function PrelistTableSection({
       count: filteredData.length,
       totBeban,
       totSubmit,
+      totDraft,
+      totOpen,
       totOpenDraft,
       totPct,
       totKlgBeban,
@@ -288,7 +305,7 @@ export default function PrelistTableSection({
         </button>
       </div>
 
-      {/* Summary Stat Cards */}
+      {/* Summary Stat Cards (4 Cards: Total, Submit, Draft, Open) */}
       <div className="prelist-stat-row">
         
         <div className="stat-pill-card">
@@ -323,30 +340,34 @@ export default function PrelistTableSection({
             <Clock size={18} className="text-warning" />
           </div>
           <div className="stat-pill-body">
-            <span className="stat-pill-title">Open / Draft (Sisa Beban)</span>
+            <span className="stat-pill-title">Status Draft (Pengerjaan)</span>
             <div className="stat-pill-num-row">
-              <span className={`stat-pill-num ${summary.totOpenDraft > 0 ? 'text-warning' : 'text-muted'}`}>
-                {summary.totOpenDraft.toLocaleString('id-ID')}
+              <span className={`stat-pill-num ${summary.totDraft > 0 ? 'text-warning' : 'text-muted'}`}>
+                {summary.totDraft.toLocaleString('id-ID')}
               </span>
               <span className="stat-pill-fraction">Unit</span>
             </div>
             <span className="stat-pill-sub">
-              {summary.totOpenDraft > 0 ? `${(100 - summary.totPct).toFixed(2)}% belum disubmit` : 'Semua Sub SLS tuntas'}
+              {summary.totDraft > 0 ? `${summary.totDraft.toLocaleString('id-ID')} tersimpan di CAPI` : '0 Draft'}
             </span>
           </div>
         </div>
 
         <div className="stat-pill-card">
           <div className="stat-pill-icon bg-info-subtle">
-            <Users size={18} className="text-info" />
+            <CircleDot size={18} className="text-info" />
           </div>
           <div className="stat-pill-body">
-            <span className="stat-pill-title">Prelist Keluarga & Usaha</span>
+            <span className="stat-pill-title">Status Open (Belum Mulai)</span>
             <div className="stat-pill-num-row">
-              <span className="stat-pill-num text-main">{summary.klgPct.toFixed(1)}% Klg</span>
-              <span className="stat-pill-fraction">/ {summary.ushPct.toFixed(1)}% Ush</span>
+              <span className={`stat-pill-num ${summary.totOpen > 0 ? 'text-info' : 'text-muted'}`}>
+                {summary.totOpen.toLocaleString('id-ID')}
+              </span>
+              <span className="stat-pill-fraction">Unit</span>
             </div>
-            <span className="stat-pill-sub">Submit Klg ({summary.totKlgSub.toLocaleString('id-ID')}) • Ush ({summary.totUshSub.toLocaleString('id-ID')})</span>
+            <span className="stat-pill-sub">
+              {summary.totOpen > 0 ? `${summary.totOpen.toLocaleString('id-ID')} belum dibuka enumerator` : '0 Open'}
+            </span>
           </div>
         </div>
 
@@ -394,10 +415,17 @@ export default function PrelistTableSection({
           </button>
           <button 
             type="button" 
-            className={`status-filter-pill ${statusFilter === '90-99' ? 'active' : ''}`}
-            onClick={() => { setStatusFilter('90-99'); setCurrentPage(1); }}
+            className={`status-filter-pill ${statusFilter === 'DRAFT' ? 'active' : ''}`}
+            onClick={() => { setStatusFilter('DRAFT'); setCurrentPage(1); }}
           >
-            90-99% ({statusCounts.c90_99})
+            Ada Draft ({statusCounts.cDraft})
+          </button>
+          <button 
+            type="button" 
+            className={`status-filter-pill ${statusFilter === 'OPEN' ? 'active' : ''}`}
+            onClick={() => { setStatusFilter('OPEN'); setCurrentPage(1); }}
+          >
+            Ada Open ({statusCounts.cOpen})
           </button>
           <button 
             type="button" 
@@ -481,10 +509,16 @@ export default function PrelistTableSection({
                   {renderSortIcon('totSubmit')}
                 </div>
               </th>
-              <th onClick={() => handleSort('totOpenDraft')} className="sortable-th text-center" title="Urutkan berdasarkan Sisa Open / Draft">
+              <th onClick={() => handleSort('totDraft')} className="sortable-th text-center" title="Urutkan berdasarkan Status Draft">
                 <div className="th-content justify-center">
-                  <span>Open / Draft</span>
-                  {renderSortIcon('totOpenDraft')}
+                  <span>Draft</span>
+                  {renderSortIcon('totDraft')}
+                </div>
+              </th>
+              <th onClick={() => handleSort('totOpen')} className="sortable-th text-center" title="Urutkan berdasarkan Status Open">
+                <div className="th-content justify-center">
+                  <span>Open</span>
+                  {renderSortIcon('totOpen')}
                 </div>
               </th>
               <th onClick={() => handleSort('prelistKeluargaSub')} className="sortable-th text-center" title="Urutkan berdasarkan Submit Prelist Keluarga">
@@ -518,7 +552,8 @@ export default function PrelistTableSection({
             {paginatedData.length > 0 ? (
               paginatedData.map((row, idx) => {
                 const globalIdx = (currentPage - 1) * PAGE_SIZE + idx + 1;
-                const openDraft = row.totOpenDraft !== undefined ? row.totOpenDraft : Math.max(0, (row.totBeban || 0) - (row.totSubmit || 0));
+                const draft = Number(row.totDraft || 0);
+                const open = Number(row.totOpen || 0);
 
                 return (
                   <tr key={row.kdSubSls || globalIdx} className="table-data-row">
@@ -538,8 +573,13 @@ export default function PrelistTableSection({
                     <td className="text-right font-medium">{row.totBeban}</td>
                     <td className="text-right font-bold text-success">{row.totSubmit}</td>
                     <td className="text-center">
-                      <span className={`status-tag ${openDraft > 0 ? 'tag-warning font-bold' : 'tag-done'}`}>
-                        {openDraft}
+                      <span className={`status-tag ${draft > 0 ? 'tag-warning font-bold' : 'tag-done'}`}>
+                        {draft}
+                      </span>
+                    </td>
+                    <td className="text-center">
+                      <span className={`status-tag ${open > 0 ? 'tag-info font-bold' : 'tag-done'}`}>
+                        {open}
                       </span>
                     </td>
                     <td className="text-center">
@@ -583,7 +623,7 @@ export default function PrelistTableSection({
               })
             ) : (
               <tr>
-                <td colSpan="12" className="empty-table-cell">
+                <td colSpan="13" className="empty-table-cell">
                   <div className="empty-table-state">
                     <AlertCircle size={32} className="text-muted" />
                     <p className="empty-text">Tidak ada data Sub SLS yang sesuai dengan kriteria filter atau pencarian.</p>

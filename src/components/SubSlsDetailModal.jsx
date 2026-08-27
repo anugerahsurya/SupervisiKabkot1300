@@ -1,71 +1,60 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   X, 
   MapPin, 
   Users, 
   Briefcase, 
   Layers, 
-  TrendingUp, 
-  CheckCircle2, 
-  Clock,
-  AlertCircle,
-  FileSpreadsheet,
   CheckCircle,
-  ListFilter
+  Clock,
+  CircleDot,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export default function SubSlsDetailModal({ data, onClose }) {
   if (!data) return null;
 
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'open-draft' | 'submit'
-
   const totBeban = Number(data.totBeban || 0);
   const totSubmit = Number(data.totSubmit || 0);
-  const totOpenDraft = Math.max(0, totBeban - totSubmit);
+  const totDraft = Number(data.totDraft || 0);
+  const totOpen = Number(data.totOpen || 0);
   const pct = totBeban > 0 ? ((totSubmit / totBeban) * 100).toFixed(1) : '100.0';
 
-  // Calculations for Prelist Awal
+  // Prelist Awal
+  const plTotTot = Number(data.totPrelistTot || 0);
+  const plTotSub = Number(data.totPrelistSub || 0);
+  const plDraft = Number(data.prelistDraft || 0);
+  const plOpen = Number(data.prelistOpen || 0);
+
   const plKlgTot = Number(data.prelistKeluargaTot || 0);
   const plKlgSub = Number(data.prelistKeluargaSub || 0);
-  const plKlgOpenDraft = Math.max(0, plKlgTot - plKlgSub);
 
   const plUshTot = Number(data.prelistUsahaTot || 0);
   const plUshSub = Number(data.prelistUsahaSub || 0);
-  const plUshOpenDraft = Math.max(0, plUshTot - plUshSub);
 
   const plNonBkuTot = Number(data.prelistNonBkuTot || 0);
   const plNonBkuSub = Number(data.prelistNonBkuSub || 0);
-  const plNonBkuOpenDraft = Math.max(0, plNonBkuTot - plNonBkuSub);
 
-  const plTotTot = Number(data.totPrelistTot || 0);
-  const plTotSub = Number(data.totPrelistSub || 0);
-  const plTotOpenDraft = Math.max(0, plTotTot - plTotSub);
-
-  // Calculations for GL (Ground Check)
+  // Ground Check (GL)
   const glKlgTot = Number(data.glKeluargaTot || 0);
   const glKlgSub = Number(data.glKeluargaSub || 0);
-  const glKlgOpenDraft = Math.max(0, glKlgTot - glKlgSub);
-
   const glUshTot = Number(data.glUsahaTot || 0);
   const glUshSub = Number(data.glUsahaSub || 0);
-  const glUshOpenDraft = Math.max(0, glUshTot - glUshSub);
 
-  // Calculations for AB (Assignment Baru)
+  // Assignment Baru (AB)
+  const abTotTot = Number(data.totAbTot || 0);
+  const abTotSub = Number(data.totAbSub || 0);
+  const abDraft = Number(data.abDraft || 0);
+  const abOpen = Number(data.abOpen || 0);
+
   const abKlgTot = Number(data.abKeluargaTot || 0);
   const abKlgSub = Number(data.abKeluargaSub || 0);
-  const abKlgOpenDraft = Math.max(0, abKlgTot - abKlgSub);
 
   const abUshTot = Number(data.abUsahaTot || 0);
   const abUshSub = Number(data.abUsahaSub || 0);
-  const abUshOpenDraft = Math.max(0, abUshTot - abUshSub);
 
   const abNonBkuTot = Number(data.abNonBkuTot || 0);
   const abNonBkuSub = Number(data.abNonBkuSub || 0);
-  const abNonBkuOpenDraft = Math.max(0, abNonBkuTot - abNonBkuSub);
-
-  const abTotTot = Number(data.totAbTot || 0);
-  const abTotSub = Number(data.totAbSub || 0);
-  const abTotOpenDraft = Math.max(0, abTotTot - abTotSub);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -78,7 +67,7 @@ export default function SubSlsDetailModal({ data, onClose }) {
               <Layers size={20} className="text-primary" />
             </div>
             <div>
-              <h3 className="modal-title">Rincian Lengkap Sub SLS</h3>
+              <h3 className="modal-title">Rincian Lengkap Status Sub SLS</h3>
               <p className="modal-subtitle">{data.nmSubSls} — {data.kdSubSls}</p>
             </div>
           </div>
@@ -127,8 +116,8 @@ export default function SubSlsDetailModal({ data, onClose }) {
             </div>
           </div>
 
-          {/* Pemisahan Utama: SUBMIT vs OPEN / DRAFT Cards */}
-          <div className="status-comparison-grid">
+          {/* Pemisahan 4 Status: SUBMIT vs DRAFT vs OPEN vs TOTAL BEBAN */}
+          <div className="status-comparison-grid-4">
             
             {/* Card 1: SUDAH SUBMIT */}
             <div className="status-metric-card border-success">
@@ -147,28 +136,49 @@ export default function SubSlsDetailModal({ data, onClose }) {
               </div>
             </div>
 
-            {/* Card 2: OPEN / DRAFT (BELUM SELESAI) */}
-            <div className={`status-metric-card ${totOpenDraft > 0 ? 'border-warning' : 'border-neutral'}`}>
+            {/* Card 2: DRAFT */}
+            <div className={`status-metric-card ${totDraft > 0 ? 'border-warning' : 'border-neutral'}`}>
               <div className="smc-header">
                 <div className="smc-icon-wrap bg-warning-subtle">
                   <Clock size={18} className="text-warning" />
                 </div>
-                <span className="smc-title">Open / Draft (Belum Submit)</span>
+                <span className="smc-title">Draft (Sedang Dikerjakan)</span>
               </div>
               <div className="smc-body">
                 <div className="smc-val-row">
-                  <span className={`smc-num font-bold ${totOpenDraft > 0 ? 'text-warning' : 'text-muted'}`}>
-                    {totOpenDraft}
+                  <span className={`smc-num font-bold ${totDraft > 0 ? 'text-warning' : 'text-muted'}`}>
+                    {totDraft}
                   </span>
                   <span className="smc-unit">Unit</span>
                 </div>
                 <span className="smc-desc">
-                  {totOpenDraft > 0 ? 'Perlu tindak lanjut PPL' : 'Tuntas (0 Open/Draft)'}
+                  {totDraft > 0 ? 'Tersimpan lokal di CAPI' : '0 Draft'}
                 </span>
               </div>
             </div>
 
-            {/* Card 3: TOTAL BEBAN */}
+            {/* Card 3: OPEN */}
+            <div className={`status-metric-card ${totOpen > 0 ? 'border-info' : 'border-neutral'}`}>
+              <div className="smc-header">
+                <div className="smc-icon-wrap bg-info-subtle">
+                  <CircleDot size={18} className="text-info" />
+                </div>
+                <span className="smc-title">Open (Belum Dimulai)</span>
+              </div>
+              <div className="smc-body">
+                <div className="smc-val-row">
+                  <span className={`smc-num font-bold ${totOpen > 0 ? 'text-info' : 'text-muted'}`}>
+                    {totOpen}
+                  </span>
+                  <span className="smc-unit">Unit</span>
+                </div>
+                <span className="smc-desc">
+                  {totOpen > 0 ? 'Belum dibuka enumerator' : '0 Open'}
+                </span>
+              </div>
+            </div>
+
+            {/* Card 4: TOTAL BEBAN */}
             <div className="status-metric-card">
               <div className="smc-header">
                 <div className="smc-icon-wrap bg-primary-subtle">
@@ -181,17 +191,17 @@ export default function SubSlsDetailModal({ data, onClose }) {
                   <span className="smc-num font-bold text-main">{totBeban}</span>
                   <span className="smc-unit">Unit</span>
                 </div>
-                <span className="smc-desc">Prelist + GL + AB</span>
+                <span className="smc-desc">Prelist ({plTotTot}) + AB ({abTotTot})</span>
               </div>
             </div>
 
           </div>
 
-          {/* Kategori 1: Prelist Awal (Pemilahan Submit vs Open/Draft) */}
+          {/* Kategori 1: Prelist Awal (Submit vs Draft vs Open) */}
           <div className="detail-section">
             <h4 className="detail-section-title">
               <FileSpreadsheet size={15} className="text-primary" />
-              <span>1. Rincian Prelist Awal (Submit vs Open/Draft)</span>
+              <span>1. Rincian Prelist Awal (Submit, Draft & Open)</span>
             </h4>
 
             <div className="detail-table-wrap">
@@ -201,7 +211,8 @@ export default function SubSlsDetailModal({ data, onClose }) {
                     <th>Rincian Kategori</th>
                     <th className="text-center">Total Beban</th>
                     <th className="text-center text-success">Sudah Submit</th>
-                    <th className="text-center text-warning">Open / Draft (Sisa)</th>
+                    <th className="text-center text-warning">Draft</th>
+                    <th className="text-center text-info">Open</th>
                     <th className="text-center">% Capaian</th>
                   </tr>
                 </thead>
@@ -210,33 +221,24 @@ export default function SubSlsDetailModal({ data, onClose }) {
                     <td>Prelist Keluarga</td>
                     <td className="text-center font-medium">{plKlgTot}</td>
                     <td className="text-center text-success font-semibold">{plKlgSub}</td>
-                    <td className="text-center">
-                      <span className={`status-tag ${plKlgOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                        {plKlgOpenDraft}
-                      </span>
-                    </td>
+                    <td className="text-center text-muted font-sm">-</td>
+                    <td className="text-center text-muted font-sm">-</td>
                     <td className="text-center">{Math.round((data.prelistKeluargaPct || 0) * 100)}%</td>
                   </tr>
                   <tr>
                     <td>Prelist Usaha</td>
                     <td className="text-center font-medium">{plUshTot}</td>
                     <td className="text-center text-success font-semibold">{plUshSub}</td>
-                    <td className="text-center">
-                      <span className={`status-tag ${plUshOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                        {plUshOpenDraft}
-                      </span>
-                    </td>
+                    <td className="text-center text-muted font-sm">-</td>
+                    <td className="text-center text-muted font-sm">-</td>
                     <td className="text-center">{Math.round((data.prelistUsahaPct || 0) * 100)}%</td>
                   </tr>
                   <tr>
                     <td>Prelist Non BKU</td>
                     <td className="text-center font-medium">{plNonBkuTot}</td>
                     <td className="text-center text-success font-semibold">{plNonBkuSub}</td>
-                    <td className="text-center">
-                      <span className={`status-tag ${plNonBkuOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                        {plNonBkuOpenDraft}
-                      </span>
-                    </td>
+                    <td className="text-center text-muted font-sm">-</td>
+                    <td className="text-center text-muted font-sm">-</td>
                     <td className="text-center">{Math.round((data.prelistNonBkuPct || 0) * 100)}%</td>
                   </tr>
                   <tr className="subtotal-row">
@@ -244,8 +246,13 @@ export default function SubSlsDetailModal({ data, onClose }) {
                     <td className="text-center font-bold">{plTotTot}</td>
                     <td className="text-center font-bold text-success">{plTotSub}</td>
                     <td className="text-center font-bold">
-                      <span className={`status-tag ${plTotOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                        {plTotOpenDraft}
+                      <span className={`status-tag ${plDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
+                        {plDraft}
+                      </span>
+                    </td>
+                    <td className="text-center font-bold">
+                      <span className={`status-tag ${plOpen > 0 ? 'tag-info' : 'tag-done'}`}>
+                        {plOpen}
                       </span>
                     </td>
                     <td className="text-center font-bold">{Math.round((data.totPrelistPct || 0) * 100)}%</td>
@@ -258,7 +265,7 @@ export default function SubSlsDetailModal({ data, onClose }) {
           {/* Kategori 2 & 3: Ground Check (GL) & Assignment Baru */}
           <div className="detail-two-cols">
             
-            {/* GL */}
+            {/* Ground Check (GL) */}
             <div className="detail-section">
               <h4 className="detail-section-title">
                 <Users size={15} className="text-info" />
@@ -272,7 +279,6 @@ export default function SubSlsDetailModal({ data, onClose }) {
                       <th>Kategori</th>
                       <th className="text-center">Beban</th>
                       <th className="text-center text-success">Submit</th>
-                      <th className="text-center text-warning">Open/Draft</th>
                       <th className="text-center">%</th>
                     </tr>
                   </thead>
@@ -281,22 +287,12 @@ export default function SubSlsDetailModal({ data, onClose }) {
                       <td>GL Keluarga</td>
                       <td className="text-center">{glKlgTot}</td>
                       <td className="text-center text-success font-semibold">{glKlgSub}</td>
-                      <td className="text-center">
-                        <span className={`status-tag ${glKlgOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                          {glKlgOpenDraft}
-                        </span>
-                      </td>
                       <td className="text-center">{Math.round((data.glKeluargaPct || 0) * 100)}%</td>
                     </tr>
                     <tr>
                       <td>GL Usaha</td>
                       <td className="text-center">{glUshTot}</td>
                       <td className="text-center text-success font-semibold">{glUshSub}</td>
-                      <td className="text-center">
-                        <span className={`status-tag ${glUshOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                          {glUshOpenDraft}
-                        </span>
-                      </td>
                       <td className="text-center">{Math.round((data.glUsahaPct || 0) * 100)}%</td>
                     </tr>
                   </tbody>
@@ -304,7 +300,7 @@ export default function SubSlsDetailModal({ data, onClose }) {
               </div>
             </div>
 
-            {/* Assignment Baru */}
+            {/* Assignment Baru (AB) */}
             <div className="detail-section">
               <h4 className="detail-section-title">
                 <Briefcase size={15} className="text-warning" />
@@ -318,8 +314,8 @@ export default function SubSlsDetailModal({ data, onClose }) {
                       <th>Kategori</th>
                       <th className="text-center">Beban</th>
                       <th className="text-center text-success">Submit</th>
-                      <th className="text-center text-warning">Open/Draft</th>
-                      <th className="text-center">%</th>
+                      <th className="text-center text-warning">Draft</th>
+                      <th className="text-center text-info">Open</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -327,45 +323,37 @@ export default function SubSlsDetailModal({ data, onClose }) {
                       <td>AB Keluarga</td>
                       <td className="text-center">{abKlgTot}</td>
                       <td className="text-center text-success font-semibold">{abKlgSub}</td>
-                      <td className="text-center">
-                        <span className={`status-tag ${abKlgOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                          {abKlgOpenDraft}
-                        </span>
-                      </td>
-                      <td className="text-center">{Math.round((data.abKeluargaPct || 0) * 100)}%</td>
+                      <td className="text-center text-muted font-sm">-</td>
+                      <td className="text-center text-muted font-sm">-</td>
                     </tr>
                     <tr>
                       <td>AB Usaha</td>
                       <td className="text-center">{abUshTot}</td>
                       <td className="text-center text-success font-semibold">{abUshSub}</td>
-                      <td className="text-center">
-                        <span className={`status-tag ${abUshOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                          {abUshOpenDraft}
-                        </span>
-                      </td>
-                      <td className="text-center">{Math.round((data.abUsahaPct || 0) * 100)}%</td>
+                      <td className="text-center text-muted font-sm">-</td>
+                      <td className="text-center text-muted font-sm">-</td>
                     </tr>
                     <tr>
                       <td>AB Non BKU</td>
                       <td className="text-center">{abNonBkuTot}</td>
                       <td className="text-center text-success font-semibold">{abNonBkuSub}</td>
-                      <td className="text-center">
-                        <span className={`status-tag ${abNonBkuOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                          {abNonBkuOpenDraft}
-                        </span>
-                      </td>
-                      <td className="text-center">{Math.round((data.abNonBkuPct || 0) * 100)}%</td>
+                      <td className="text-center text-muted font-sm">-</td>
+                      <td className="text-center text-muted font-sm">-</td>
                     </tr>
                     <tr className="subtotal-row">
                       <td><strong>Total AB</strong></td>
                       <td className="text-center font-bold">{abTotTot}</td>
                       <td className="text-center font-bold text-success">{abTotSub}</td>
                       <td className="text-center font-bold">
-                        <span className={`status-tag ${abTotOpenDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                          {abTotOpenDraft}
+                        <span className={`status-tag ${abDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
+                          {abDraft}
                         </span>
                       </td>
-                      <td className="text-center font-bold">{Math.round((data.totAbPct || 0) * 100)}%</td>
+                      <td className="text-center font-bold">
+                        <span className={`status-tag ${abOpen > 0 ? 'tag-info' : 'tag-done'}`}>
+                          {abOpen}
+                        </span>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
