@@ -65,7 +65,7 @@ export default function PengawalanSection({ pengawalanData, kodeKab }) {
       <div className="kpi-grid">
         
         {/* Card 1: SLS Submit > 95% */}
-        <div className="kpi-card success-card">
+        <div className="kpi-card">
           <div className="kpi-icon-wrap">
             <CheckCircle size={22} className="kpi-icon text-success" />
           </div>
@@ -80,7 +80,7 @@ export default function PengawalanSection({ pengawalanData, kodeKab }) {
         </div>
 
         {/* Card 2: SLS Open 100% */}
-        <div className={`kpi-card ${p.slsOpen100 > 0 ? 'danger-card' : 'neutral-card'}`}>
+        <div className="kpi-card">
           <div className="kpi-icon-wrap">
             <AlertTriangle size={22} className={`kpi-icon ${p.slsOpen100 > 0 ? 'text-danger' : 'text-muted'}`} />
           </div>
@@ -95,7 +95,7 @@ export default function PengawalanSection({ pengawalanData, kodeKab }) {
         </div>
 
         {/* Card 3: SLS Draft 100% */}
-        <div className="kpi-card warning-card">
+        <div className="kpi-card">
           <div className="kpi-icon-wrap">
             <Clock size={22} className="kpi-icon text-warning" />
           </div>
@@ -155,7 +155,7 @@ export default function PengawalanSection({ pengawalanData, kodeKab }) {
         </div>
 
         {/* Card 7: VHTL Belum Submit */}
-        <div className="kpi-card warning-card">
+        <div className="kpi-card">
           <div className="kpi-icon-wrap">
             <AlertCircle size={22} className="kpi-icon text-warning" />
           </div>
@@ -170,7 +170,7 @@ export default function PengawalanSection({ pengawalanData, kodeKab }) {
         </div>
 
         {/* Card 8: Anomali Usaha & Keluarga */}
-        <div className="kpi-card danger-card">
+        <div className="kpi-card">
           <div className="kpi-icon-wrap">
             <AlertTriangle size={22} className="kpi-icon text-danger" />
           </div>

@@ -130,7 +130,7 @@ export default function UraianTugasSection({ uraianTugas = [], linkNote = '' }) 
           return (
             <div 
               key={task.no}
-              className={`task-card status-${status} ${isPoin1to3 ? 'featured-point' : ''}`}
+              className="task-card"
               onClick={() => toggleStatus(task.no)}
             >
               <div className="task-card-left">
