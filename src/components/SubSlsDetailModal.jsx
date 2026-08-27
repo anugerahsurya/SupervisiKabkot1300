@@ -129,9 +129,18 @@ export default function SubSlsDetailModal({ data, onClose }) {
 
               <div className="detail-box highlight-user-box">
                 <span className="detail-box-label">Petugas / PPL</span>
-                {data.username ? (
+                {data.usernames && data.usernames.length > 0 ? (
+                  <div className="detail-users-wrap">
+                    {data.usernames.map((u, i) => (
+                      <div key={i} className="detail-user-pill">
+                        <User size={12} className="text-primary" />
+                        <span className="detail-user-name">{u}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : data.username ? (
                   <div className="detail-user-pill">
-                    <User size={13} className="text-primary" />
+                    <User size={12} className="text-primary" />
                     <span className="detail-user-name">{data.username}</span>
                   </div>
                 ) : (

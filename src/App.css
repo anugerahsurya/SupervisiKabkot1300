@@ -1657,13 +1657,30 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 2px;
+  background: #ffffff;
+  border: 1px solid var(--border-accent);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.detail-users-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
 }
 
 .detail-user-name {
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--primary-dark);
+}
+
+.user-badges-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
 }
 
 .user-badge-pill {
@@ -1675,9 +1692,9 @@ html, body {
   color: var(--primary-dark);
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  max-width: 150px;
+  max-width: 170px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -585,9 +585,18 @@ export default function PrelistTableSection({
                       </div>
                     </td>
                     <td>
-                      {row.username ? (
+                      {row.usernames && row.usernames.length > 0 ? (
+                        <div className="user-badges-container">
+                          {row.usernames.map((u, i) => (
+                            <div key={i} className="user-badge-pill" title={`Petugas: ${u}`}>
+                              <User size={11} className="text-primary" />
+                              <span className="user-name-text">{u}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : row.username ? (
                         <div className="user-badge-pill" title={`Petugas: ${row.username}`}>
-                          <User size={12} className="text-primary" />
+                          <User size={11} className="text-primary" />
                           <span className="user-name-text">{row.username}</span>
                         </div>
                       ) : (

@@ -4,8 +4,15 @@ export const masterWilayahMap = {"1308000000000000": {"nmKab": "Kabupaten Lima P
 export function enrichPrelistWithMaster(list, defaultKdKab) {
   if (!defaultKdKab) defaultKdKab = '1376';
   if (!Array.isArray(list)) return [];
-  return list.map(function(item) {
+
+  var mapBySub = {};
+  var order = [];
+
+  list.forEach(function(item) {
+    if (!item) return;
     var kdSub = String(item.kdSubSls || '').trim();
+    if (!kdSub) return;
+
     var master = masterWilayahMap[kdSub] || {};
     var is1376 = kdSub.startsWith('1376');
     var kdKab = item.kdKab || master.kdKab || defaultKdKab || (is1376 ? '1376' : '1308');
@@ -16,15 +23,117 @@ export function enrichPrelistWithMaster(list, defaultKdKab) {
       ? item.nmSubSls 
       : (master.nmSubSls || item.nmSubSls || ('Sub SLS [' + kdSub.slice(-2) + ']'));
 
-    return {
-      ...item,
-      kdKab: kdKab,
-      nmKab: nmKab,
-      kdKec: item.kdKec || master.kdKec || kdSub.slice(0, 7),
-      nmKec: nmKec,
-      kdDesa: item.kdDesa || master.kdDesa || kdSub.slice(0, 10),
-      nmDesa: nmDesa,
-      nmSubSls: nmSubSls
-    };
+    var userStr = String(item.username || '').trim();
+
+    if (!mapBySub[kdSub]) {
+      order.push(kdSub);
+      var initialUsernames = [];
+      if (userStr) {
+        userStr.split(',').forEach(function(u) {
+          var clean = u.trim();
+          if (clean && initialUsernames.indexOf(clean) === -1) initialUsernames.push(clean);
+        });
+      }
+
+      mapBySub[kdSub] = Object.assign({}, item, {
+        kdKab: kdKab,
+        nmKab: nmKab,
+        kdKec: item.kdKec || master.kdKec || kdSub.slice(0, 7),
+        nmKec: nmKec,
+        kdDesa: item.kdDesa || master.kdDesa || kdSub.slice(0, 10),
+        nmDesa: nmDesa,
+        kdSubSls: kdSub,
+        nmSubSls: nmSubSls,
+        usernames: initialUsernames,
+        username: initialUsernames.join(', '),
+        
+        totBeban: Number(item.totBeban) || 0,
+        totSubmit: Number(item.totSubmit) || 0,
+        totDraft: Number(item.totDraft) || 0,
+        totOpen: Number(item.totOpen) || 0,
+        totOpenDraft: (Number(item.totOpen) || 0) + (Number(item.totDraft) || 0),
+
+        prelistKeluargaTot: Number(item.prelistKeluargaTot) || 0,
+        prelistKeluargaSub: Number(item.prelistKeluargaSub) || 0,
+        prelistUsahaTot: Number(item.prelistUsahaTot) || 0,
+        prelistUsahaSub: Number(item.prelistUsahaSub) || 0,
+        prelistNonBkuTot: Number(item.prelistNonBkuTot) || 0,
+        prelistNonBkuSub: Number(item.prelistNonBkuSub) || 0,
+
+        totPrelistTot: Number(item.totPrelistTot) || 0,
+        totPrelistSub: Number(item.totPrelistSub) || 0,
+        prelistOpen: Number(item.prelistOpen) || 0,
+        prelistDraft: Number(item.prelistDraft) || 0,
+
+        abKeluargaTot: Number(item.abKeluargaTot) || 0,
+        abKeluargaSub: Number(item.abKeluargaSub) || 0,
+        abUsahaTot: Number(item.abUsahaTot) || 0,
+        abUsahaSub: Number(item.abUsahaSub) || 0,
+        abNonBkuTot: Number(item.abNonBkuTot) || 0,
+        abNonBkuSub: Number(item.abNonBkuSub) || 0,
+
+        totAbTot: Number(item.totAbTot) || 0,
+        totAbSub: Number(item.totAbSub) || 0,
+        abOpen: Number(item.abOpen) || 0,
+        abDraft: Number(item.abDraft) || 0,
+        dummy: Number(item.dummy) || 0,
+        deltaJml: Number(item.deltaJml) || 0
+      });
+    } else {
+      var existing = mapBySub[kdSub];
+      if (userStr) {
+        userStr.split(',').forEach(function(u) {
+          var clean = u.trim();
+          if (clean && existing.usernames.indexOf(clean) === -1) existing.usernames.push(clean);
+        });
+        existing.username = existing.usernames.join(', ');
+      }
+
+      existing.totBeban += Number(item.totBeban) || 0;
+      existing.totSubmit += Number(item.totSubmit) || 0;
+      existing.totDraft += Number(item.totDraft) || 0;
+      existing.totOpen += Number(item.totOpen) || 0;
+      existing.totOpenDraft = existing.totDraft + existing.totOpen;
+
+      existing.prelistKeluargaTot += Number(item.prelistKeluargaTot) || 0;
+      existing.prelistKeluargaSub += Number(item.prelistKeluargaSub) || 0;
+      existing.prelistUsahaTot += Number(item.prelistUsahaTot) || 0;
+      existing.prelistUsahaSub += Number(item.prelistUsahaSub) || 0;
+      existing.prelistNonBkuTot += Number(item.prelistNonBkuTot) || 0;
+      existing.prelistNonBkuSub += Number(item.prelistNonBkuSub) || 0;
+
+      existing.totPrelistTot += Number(item.totPrelistTot) || 0;
+      existing.totPrelistSub += Number(item.totPrelistSub) || 0;
+      existing.prelistOpen += Number(item.prelistOpen) || 0;
+      existing.prelistDraft += Number(item.prelistDraft) || 0;
+
+      existing.abKeluargaTot += Number(item.abKeluargaTot) || 0;
+      existing.abKeluargaSub += Number(item.abKeluargaSub) || 0;
+      existing.abUsahaTot += Number(item.abUsahaTot) || 0;
+      existing.abUsahaSub += Number(item.abUsahaSub) || 0;
+      existing.abNonBkuTot += Number(item.abNonBkuTot) || 0;
+      existing.abNonBkuSub += Number(item.abNonBkuSub) || 0;
+
+      existing.totAbTot += Number(item.totAbTot) || 0;
+      existing.totAbSub += Number(item.totAbSub) || 0;
+      existing.abOpen += Number(item.abOpen) || 0;
+      existing.abDraft += Number(item.abDraft) || 0;
+      existing.dummy += Number(item.dummy) || 0;
+      existing.deltaJml += Number(item.deltaJml) || 0;
+    }
+  });
+
+  return order.map(function(kdSub) {
+    var rec = mapBySub[kdSub];
+    rec.totPct = rec.totBeban > 0 ? (rec.totSubmit / rec.totBeban) : 1;
+    rec.totPrelistPct = rec.totPrelistTot > 0 ? (rec.totPrelistSub / rec.totPrelistTot) : 1;
+    rec.prelistKeluargaPct = rec.prelistKeluargaTot > 0 ? (rec.prelistKeluargaSub / rec.prelistKeluargaTot) : 1;
+    rec.prelistUsahaPct = rec.prelistUsahaTot > 0 ? (rec.prelistUsahaSub / rec.prelistUsahaTot) : 1;
+    rec.prelistNonBkuPct = rec.prelistNonBkuTot > 0 ? (rec.prelistNonBkuSub / rec.prelistNonBkuTot) : 1;
+    rec.totAbPct = rec.totAbTot > 0 ? (rec.totAbSub / rec.totAbTot) : 1;
+    rec.abKeluargaPct = rec.abKeluargaTot > 0 ? (rec.abKeluargaSub / rec.abKeluargaTot) : 1;
+    rec.abUsahaPct = rec.abUsahaTot > 0 ? (rec.abUsahaSub / rec.abUsahaTot) : 1;
+    rec.abNonBkuPct = rec.abNonBkuTot > 0 ? (rec.abNonBkuSub / rec.abNonBkuTot) : 1;
+    return rec;
   });
 }
