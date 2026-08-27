@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
   Building2, 
   MapPin, 
   BarChart3, 
   Database, 
   FileSpreadsheet,
+  Upload,
   CheckCircle2,
   RefreshCw,
   Loader2,
@@ -22,12 +23,21 @@ export default function Navbar({
   setActiveTab, 
   onOpenGas, 
   onExport,
+  onUploadExcel,
   onQuickSyncGas,
   isSyncingGas,
   lastUpdated,
   currentTheme,
   onThemeChange
 }) {
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    if (onUploadExcel) {
+      onUploadExcel(e);
+    }
+  };
+
   return (
     <header className="navbar-wrapper">
       
@@ -93,6 +103,23 @@ export default function Navbar({
               <Database size={14} />
               <span>Pengaturan GAS</span>
             </button>
+
+            {/* Upload Excel Button */}
+            <label 
+              className="btn btn-secondary btn-sm"
+              title="Unggah File Excel SQL Lab UMKM / Rekap Lapangan SE2026"
+              style={{ cursor: 'pointer', margin: 0 }}
+            >
+              <Upload size={14} className="text-primary" />
+              <span>Upload Excel</span>
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                accept=".xlsx, .xls, .csv" 
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+              />
+            </label>
 
             {/* Export Excel */}
             <button 

@@ -13,7 +13,7 @@ import {
   initialPrelist1376 
 } from './data/initialData';
 import { enrichPrelistWithMaster } from './data/masterWilayahInfo';
-import { exportToExcel } from './services/excelService';
+import { exportToExcel, parsePrelistExcel } from './services/excelService';
 import { getGasUrl, fetchDatasetsFromGas } from './services/gasService';
 import './App.css';
 
@@ -189,6 +189,76 @@ export default function App() {
     });
   };
 
+  // Upload Excel Handler from Navbar
+  const handleUploadExcel = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setToast({
+        type: 'info',
+        title: 'Memproses File Excel...',
+        message: `Membaca data dari "${file.name}"...`
+      });
+
+      const parsed = await parsePrelistExcel(file);
+      const nowStr = getFormattedTimestamp();
+
+      if (parsed.type === 'prelist_multi') {
+        const enriched1308 = enrichPrelistWithMaster(parsed.prelist1308, '1308');
+        const enriched1376 = enrichPrelistWithMaster(parsed.prelist1376, '1376');
+
+        setPrelist1308(enriched1308);
+        setPrelist1376(enriched1376);
+        setLastUpdated(`${nowStr} (Upload Excel)`);
+
+        saveAllToCache(pengawalanData, uraianTugas, enriched1308, enriched1376, `${nowStr} (Upload Excel)`);
+
+        setToast({
+          type: 'success',
+          title: 'Upload Excel Berhasil',
+          message: `Berhasil memuat ${enriched1308.length} Sub SLS Kab. Lima Puluh Kota & ${enriched1376.length} Sub SLS Kota Payakumbuh dari "${file.name}".`
+        });
+      } else if (parsed.type === 'pengawalan') {
+        setPengawalanData(parsed.data.pengawalan);
+        if (parsed.data.uraianTugas) setUraianTugas(parsed.data.uraianTugas);
+        setLastUpdated(`${nowStr} (Upload Excel)`);
+
+        saveAllToCache(parsed.data.pengawalan, parsed.data.uraianTugas || uraianTugas, prelist1308, prelist1376, `${nowStr} (Upload Excel)`);
+
+        setToast({
+          type: 'success',
+          title: 'Upload Excel Berhasil',
+          message: `Berhasil memuat data Pengawalan Kualitas dari file "${file.name}".`
+        });
+      } else if (parsed.type === 'prelist') {
+        if (parsed.kdKab === '1308') {
+          const enriched = enrichPrelistWithMaster(parsed.data, '1308');
+          setPrelist1308(enriched);
+          saveAllToCache(pengawalanData, uraianTugas, enriched, prelist1376, `${nowStr} (Upload Excel)`);
+        } else {
+          const enriched = enrichPrelistWithMaster(parsed.data, '1376');
+          setPrelist1376(enriched);
+          saveAllToCache(pengawalanData, uraianTugas, prelist1308, enriched, `${nowStr} (Upload Excel)`);
+        }
+        setLastUpdated(`${nowStr} (Upload Excel)`);
+        setToast({
+          type: 'success',
+          title: 'Upload Excel Berhasil',
+          message: `Berhasil memuat ${parsed.count} data Sub SLS dari "${file.name}".`
+        });
+      }
+    } catch (err) {
+      setToast({
+        type: 'error',
+        title: 'Gagal Memproses Excel',
+        message: err.message || 'Format file Excel tidak sesuai.'
+      });
+    } finally {
+      e.target.value = '';
+    }
+  };
+
   // Reset to Baseline Data
   const handleResetData = () => {
     if (!window.confirm('Reset seluruh data ke kondisi awal bawaan aplikasi?')) return;
@@ -230,6 +300,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         onOpenGas={() => setIsGasOpen(true)}
         onExport={handleExport}
+        onUploadExcel={handleUploadExcel}
         onQuickSyncGas={handleQuickSyncGas}
         isSyncingGas={isSyncingGas}
         lastUpdated={lastUpdated}

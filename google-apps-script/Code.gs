@@ -270,6 +270,17 @@ function mapRowToObject(headers, row, kdSub, kdKab) {
   var totOpenDraft = totOpen + totDraft;
   var totPct = totBeban > 0 ? (totSubmit / totBeban) : 1;
 
+  // Harmonize Prelist Keluarga Submit
+  if (plKlgSub === 0 && plKlgTot > 0) {
+    if (plSubmit > (plUshSub + plNonSub)) {
+      plKlgSub = Math.min(plKlgTot, Math.max(0, plSubmit - plUshSub - plNonSub));
+    } else if (totBeban > 0 && totSubmit >= totBeban) {
+      plKlgSub = plKlgTot;
+    } else if (totPrelist > 0 && plSubmit >= totPrelist) {
+      plKlgSub = plKlgTot;
+    }
+  }
+
   return {
     kdKab: kdKab,
     nmKab: String(d['NAMA_KABUPATEN'] || d['NMKAB'] || (kdKab === '1376' ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota')).trim(),

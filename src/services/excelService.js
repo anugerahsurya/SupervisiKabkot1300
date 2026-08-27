@@ -79,7 +79,7 @@ function mergePrelistArrays(existingList, newList) {
 /**
  * Parse a single Excel file
  */
-const parseSingleExcel = async (file) => {
+export const parseSingleExcel = async (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -255,6 +255,18 @@ function parseSqlLabUmkmFast(sheet, headerRow) {
     const totOpenDraft = totOpen + totDraft;
     const totPct = totBeban > 0 ? totSubmit / totBeban : 1;
 
+    // Harmonize Prelist Keluarga Submit
+    let finalKlgSub = plKlgSub;
+    if (finalKlgSub === 0 && plKlgTot > 0) {
+      if (plSubmit > (plUshSub + plNonSub)) {
+        finalKlgSub = Math.min(plKlgTot, Math.max(0, plSubmit - plUshSub - plNonSub));
+      } else if (totBeban > 0 && totSubmit >= totBeban) {
+        finalKlgSub = plKlgTot;
+      } else if (totPrelist > 0 && plSubmit >= totPrelist) {
+        finalKlgSub = plKlgTot;
+      }
+    }
+
     const record = {
       kdKab: kdKab,
       nmKab: masterInfo.nmKab || (is1376 ? 'Kota Payakumbuh' : 'Kabupaten Lima Puluh Kota'),
@@ -266,8 +278,8 @@ function parseSqlLabUmkmFast(sheet, headerRow) {
       nmSubSls: masterInfo.nmSubSls || `Sub SLS [${kdSub.slice(-2)}]`,
 
       prelistKeluargaTot: plKlgTot,
-      prelistKeluargaSub: plKlgSub,
-      prelistKeluargaPct: plKlgTot > 0 ? plKlgSub / plKlgTot : 1,
+      prelistKeluargaSub: finalKlgSub,
+      prelistKeluargaPct: plKlgTot > 0 ? finalKlgSub / plKlgTot : 1,
 
       prelistUsahaTot: plUshTot,
       prelistUsahaSub: plUshSub,
@@ -502,3 +514,5 @@ export const exportToExcel = (data, filename = 'Data_SE2026.xlsx') => {
   XLSX.utils.book_append_sheet(wb, ws, 'Data');
   XLSX.writeFile(wb, filename);
 };
+
+export const parsePrelistExcel = parseSingleExcel;

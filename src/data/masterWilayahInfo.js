@@ -81,6 +81,32 @@ export function enrichPrelistWithMaster(list, defaultKdKab) {
     var totOpen = Number(primary.totOpen) || 0;
     var totPct = totBeban > 0 ? (totSubmit / totBeban) : 1;
 
+    var plKlgTot = Number(primary.prelistKeluargaTot) || 0;
+    var plKlgSub = Number(primary.prelistKeluargaSub) || 0;
+    var plUshTot = Number(primary.prelistUsahaTot) || 0;
+    var plUshSub = Number(primary.prelistUsahaSub) || 0;
+    var plNonTot = Number(primary.prelistNonBkuTot) || 0;
+    var plNonSub = Number(primary.prelistNonBkuSub) || 0;
+    var totPlTot = Number(primary.totPrelistTot) || 0;
+    var totPlSub = Number(primary.totPrelistSub) || 0;
+
+    // Harmonize Prelist Keluarga Submit:
+    // If raw KELUARGA_PRELIST_SUBMIT was 0 or unmapped, calculate it from total prelist submit
+    if (plKlgSub === 0 && plKlgTot > 0) {
+      if (totPlSub > (plUshSub + plNonSub)) {
+        plKlgSub = Math.min(plKlgTot, Math.max(0, totPlSub - plUshSub - plNonSub));
+      } else if (totBeban > 0 && totSubmit >= totBeban) {
+        plKlgSub = plKlgTot;
+      } else if (totPlTot > 0 && totPlSub >= totPlTot) {
+        plKlgSub = plKlgTot;
+      }
+    }
+
+    // Ensure Prelist Usaha Submit is also aligned if 100% complete
+    if (plUshSub === 0 && plUshTot > 0 && totBeban > 0 && totSubmit >= totBeban) {
+      plUshSub = plUshTot;
+    }
+
     return Object.assign({}, primary, {
       kdKab: kdKab,
       nmKab: nmKab,
@@ -100,21 +126,21 @@ export function enrichPrelistWithMaster(list, defaultKdKab) {
       totOpenDraft: totDraft + totOpen,
       totPct: totPct,
 
-      prelistKeluargaTot: Number(primary.prelistKeluargaTot) || 0,
-      prelistKeluargaSub: Number(primary.prelistKeluargaSub) || 0,
-      prelistKeluargaPct: (Number(primary.prelistKeluargaTot) || 0) > 0 ? ((Number(primary.prelistKeluargaSub) || 0) / (Number(primary.prelistKeluargaTot) || 0)) : 1,
+      prelistKeluargaTot: plKlgTot,
+      prelistKeluargaSub: plKlgSub,
+      prelistKeluargaPct: plKlgTot > 0 ? (plKlgSub / plKlgTot) : 1,
 
-      prelistUsahaTot: Number(primary.prelistUsahaTot) || 0,
-      prelistUsahaSub: Number(primary.prelistUsahaSub) || 0,
-      prelistUsahaPct: (Number(primary.prelistUsahaTot) || 0) > 0 ? ((Number(primary.prelistUsahaSub) || 0) / (Number(primary.prelistUsahaTot) || 0)) : 1,
+      prelistUsahaTot: plUshTot,
+      prelistUsahaSub: plUshSub,
+      prelistUsahaPct: plUshTot > 0 ? (plUshSub / plUshTot) : 1,
 
-      prelistNonBkuTot: Number(primary.prelistNonBkuTot) || 0,
-      prelistNonBkuSub: Number(primary.prelistNonBkuSub) || 0,
-      prelistNonBkuPct: (Number(primary.prelistNonBkuTot) || 0) > 0 ? ((Number(primary.prelistNonBkuSub) || 0) / (Number(primary.prelistNonBkuTot) || 0)) : 1,
+      prelistNonBkuTot: plNonTot,
+      prelistNonBkuSub: plNonSub,
+      prelistNonBkuPct: plNonTot > 0 ? (plNonSub / plNonTot) : 1,
 
-      totPrelistTot: Number(primary.totPrelistTot) || 0,
-      totPrelistSub: Number(primary.totPrelistSub) || 0,
-      totPrelistPct: (Number(primary.totPrelistTot) || 0) > 0 ? ((Number(primary.totPrelistSub) || 0) / (Number(primary.totPrelistTot) || 0)) : 1,
+      totPrelistTot: totPlTot,
+      totPrelistSub: totPlSub,
+      totPrelistPct: totPlTot > 0 ? (totPlSub / totPlTot) : 1,
       prelistOpen: Number(primary.prelistOpen) || 0,
       prelistDraft: Number(primary.prelistDraft) || 0,
 
