@@ -3,7 +3,7 @@
  */
 
 const STORAGE_KEY_GAS_URL = 'se2026_gas_webapp_url';
-export const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwMTz_29r3TDgPfMhLaSFBWMQc8kYeSDr7h5skedfzobyioSS4AjOfaiUgyb35lbxOx/exec';
+export const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwk4vIhsRpqvn-b9Pne-PuJn3tNYBpgSTBokW6MMjVrMY9aJCX9s-cH9C2YexGCauoe/exec';
 
 export const getGasUrl = () => {
   return localStorage.getItem(STORAGE_KEY_GAS_URL) || DEFAULT_GAS_URL;
