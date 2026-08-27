@@ -100,54 +100,69 @@ export default function SubSlsDetailModal({ data, onClose }) {
         {/* Body */}
         <div className="modal-body">
           
-          {/* Identitas Wilayah */}
+          {/* Identitas Wilayah Administrasi */}
           <div className="detail-section">
             <h4 className="detail-section-title">
               <MapPin size={15} className="text-primary" />
-              <span>Identitas Wilayah Administrasi</span>
+              <span>Identitas Wilayah Administrasi & Petugas</span>
             </h4>
 
-            <div className="detail-grid-5">
-              <div className="detail-box">
-                <span className="detail-box-label">Kabupaten / Kota</span>
-                <span className="detail-box-value">{nmKab} ({kdKab})</span>
+            <div className="wilayah-meta-grid">
+              {/* Row 1: Kabupaten, Kecamatan, Desa */}
+              <div className="meta-card">
+                <span className="meta-card-label">Kabupaten / Kota</span>
+                <div className="meta-card-content">
+                  <span className="meta-card-main">{nmKab}</span>
+                  <span className="meta-card-sub">Kode: {kdKab}</span>
+                </div>
               </div>
 
-              <div className="detail-box">
-                <span className="detail-box-label">Kecamatan</span>
-                <span className="detail-box-value">{nmKec} ({kdKec})</span>
+              <div className="meta-card">
+                <span className="meta-card-label">Kecamatan</span>
+                <div className="meta-card-content">
+                  <span className="meta-card-main">{nmKec}</span>
+                  <span className="meta-card-sub">Kode: {kdKec}</span>
+                </div>
               </div>
 
-              <div className="detail-box">
-                <span className="detail-box-label">Desa / Nagari / Kelurahan</span>
-                <span className="detail-box-value">{nmDesa} ({kdDesa})</span>
+              <div className="meta-card">
+                <span className="meta-card-label">Desa / Nagari / Kelurahan</span>
+                <div className="meta-card-content">
+                  <span className="meta-card-main">{nmDesa}</span>
+                  <span className="meta-card-sub">Kode: {kdDesa}</span>
+                </div>
               </div>
 
-              <div className="detail-box">
-                <span className="detail-box-label">Kode & Nama SLS / Sub SLS</span>
-                <span className="detail-box-value">{nmSubSls}</span>
-                <span className="detail-box-code">{kdSubSls || data.kdSubSls}</span>
+              {/* Row 2: Sub SLS & Petugas Lapangan */}
+              <div className="meta-card meta-card-sls">
+                <span className="meta-card-label">Kode & Nama SLS / Sub SLS</span>
+                <div className="meta-card-content">
+                  <span className="meta-card-main text-primary">{nmSubSls}</span>
+                  <span className="meta-card-code">{kdSubSls || data.kdSubSls}</span>
+                </div>
               </div>
 
-              <div className="detail-box highlight-user-box">
-                <span className="detail-box-label">Petugas / PPL</span>
-                {data.usernames && data.usernames.length > 0 ? (
-                  <div className="detail-users-wrap">
-                    {data.usernames.map((u, i) => (
-                      <div key={i} className="detail-user-pill">
-                        <User size={12} className="text-primary" />
-                        <span className="detail-user-name">{u}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : data.username ? (
-                  <div className="detail-user-pill">
-                    <User size={12} className="text-primary" />
-                    <span className="detail-user-name">{data.username}</span>
-                  </div>
-                ) : (
-                  <span className="detail-box-value text-muted">-</span>
-                )}
+              <div className="meta-card meta-card-user">
+                <span className="meta-card-label">Petugas / PPL Penanggung Jawab</span>
+                <div className="meta-card-content">
+                  {data.usernames && data.usernames.length > 0 ? (
+                    <div className="meta-users-list">
+                      {data.usernames.map((u, i) => (
+                        <div key={i} className="meta-user-tag">
+                          <User size={13} className="text-primary" />
+                          <span className="meta-user-email">{u}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : data.username ? (
+                    <div className="meta-user-tag">
+                      <User size={13} className="text-primary" />
+                      <span className="meta-user-email">{data.username}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted font-sm italic">Belum ada penugasan petugas</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
