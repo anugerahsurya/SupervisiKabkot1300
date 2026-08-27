@@ -2,10 +2,11 @@
  * Service to interact with Google Apps Script Web App (Spreadsheet Database)
  */
 
-const STORAGE_KEY_GAS_URL = 'https://script.google.com/macros/s/AKfycbxxWkEtQFhyWUuMek-cwyEhRxeLCnrwWfYl7UuremdimMaKPv95_GKZKr44UcJqKsT_/exec';
+const STORAGE_KEY_GAS_URL = 'se2026_gas_webapp_url';
+export const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwMTz_29r3TDgPfMhLaSFBWMQc8kYeSDr7h5skedfzobyioSS4AjOfaiUgyb35lbxOx/exec';
 
 export const getGasUrl = () => {
-  return localStorage.getItem(STORAGE_KEY_GAS_URL) || '';
+  return localStorage.getItem(STORAGE_KEY_GAS_URL) || DEFAULT_GAS_URL;
 };
 
 export const setGasUrl = (url) => {
@@ -75,7 +76,7 @@ export const pushDatasetsToGas = async (url, payload) => {
         timestamp: new Date().toISOString()
       })
     });
-    
+
     const result = await res.json();
     if (result.status !== 'success') {
       throw new Error(result.message || 'Gagal menyimpan ke Google Spreadsheet');
