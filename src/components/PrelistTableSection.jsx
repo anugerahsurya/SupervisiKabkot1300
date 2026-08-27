@@ -90,6 +90,23 @@ export default function PrelistTableSection({
     setCurrentPage(1);
   };
 
+  // Status counts for pills
+  const statusCounts = useMemo(() => {
+    let cAll = prelistData.length;
+    let c100 = 0;
+    let c90_99 = 0;
+    let cLt90 = 0;
+
+    prelistData.forEach(d => {
+      const pct = (d.totPct !== undefined && d.totPct !== null) ? Number(d.totPct) * 100 : 0;
+      if (pct >= 100) c100++;
+      else if (pct >= 90) c90_99++;
+      else cLt90++;
+    });
+
+    return { cAll, c100, c90_99, cLt90 };
+  }, [prelistData]);
+
   // 3. Filter data
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
@@ -114,6 +131,7 @@ export default function PrelistTableSection({
       const pct = (item.totPct || 0) * 100;
       if (statusFilter === '100' && pct < 100) return false;
       if (statusFilter === '90-99' && (pct < 90 || pct >= 100)) return false;
+      if (statusFilter === 'LT90' && pct >= 90) return false;
       if (statusFilter === '75-89' && (pct < 75 || pct >= 90)) return false;
       if (statusFilter === 'LT75' && pct >= 75) return false;
 
@@ -323,14 +341,12 @@ export default function PrelistTableSection({
           </div>
         </div>
 
-      </div>
-
-      {/* Filter & Search Toolbar */}
+      </div>      {/* Filter & Search Toolbar (Like BPS Zoom Reference) */}
       <div className="table-toolbar">
         
         {/* Search Box */}
         <div className="search-input-wrap">
-          <Search size={17} className="search-icon" />
+          <Search size={16} className="search-icon" />
           <input
             type="text"
             className="search-input"
@@ -349,10 +365,40 @@ export default function PrelistTableSection({
           )}
         </div>
 
-        {/* Filter Dropdowns */}
+        {/* Status Filter Pills (Like Reference Image) */}
+        <div className="status-pills-bar">
+          <button 
+            type="button" 
+            className={`status-filter-pill ${statusFilter === 'ALL' ? 'active' : ''}`}
+            onClick={() => { setStatusFilter('ALL'); setCurrentPage(1); }}
+          >
+            Semua ({statusCounts.cAll})
+          </button>
+          <button 
+            type="button" 
+            className={`status-filter-pill ${statusFilter === '100' ? 'active' : ''}`}
+            onClick={() => { setStatusFilter('100'); setCurrentPage(1); }}
+          >
+            Selesai 100% ({statusCounts.c100})
+          </button>
+          <button 
+            type="button" 
+            className={`status-filter-pill ${statusFilter === '90-99' ? 'active' : ''}`}
+            onClick={() => { setStatusFilter('90-99'); setCurrentPage(1); }}
+          >
+            90-99% ({statusCounts.c90_99})
+          </button>
+          <button 
+            type="button" 
+            className={`status-filter-pill ${statusFilter === 'LT90' ? 'active' : ''}`}
+            onClick={() => { setStatusFilter('LT90'); setCurrentPage(1); }}
+          >
+            &lt; 90% ({statusCounts.cLt90})
+          </button>
+        </div>
+
+        {/* Regional Dropdowns */}
         <div className="filter-dropdowns-group">
-          
-          {/* Kecamatan */}
           <div className="select-wrap">
             <select 
               className="custom-select" 
@@ -366,7 +412,6 @@ export default function PrelistTableSection({
             </select>
           </div>
 
-          {/* Desa */}
           <div className="select-wrap">
             <select 
               className="custom-select" 
@@ -380,22 +425,6 @@ export default function PrelistTableSection({
               ))}
             </select>
           </div>
-
-          {/* Status Filter */}
-          <div className="select-wrap">
-            <select 
-              className="custom-select" 
-              value={statusFilter} 
-              onChange={handleStatusFilterChange}
-            >
-              <option value="ALL">Semua Status Capaian</option>
-              <option value="100">Tuntas 100%</option>
-              <option value="90-99">90% - 99.9%</option>
-              <option value="75-89">75% - 89.9%</option>
-              <option value="LT75">&lt; 75% (Perlu Perhatian)</option>
-            </select>
-          </div>
-
         </div>
 
       </div>
