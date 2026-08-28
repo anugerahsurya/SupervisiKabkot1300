@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { masterWilayahMap } from '../data/masterWilayahInfo';
 
 /**
@@ -506,13 +507,318 @@ function parsePrelistSheet(workbook, fileName) {
 }
 
 /**
- * Export table data to Excel
+ * Export Prelist Table data to a beautifully styled Excel (.xlsx) file
+ * Matches visible table view columns, formats fractions as text (prevents decimal conversion),
+ * styles the header with BPS theme color #f79039, adds clean borders and a summary row.
  */
-export const exportToExcel = (data, filename = 'Data_SE2026.xlsx') => {
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Data');
-  XLSX.writeFile(wb, filename);
+export const exportPrelistTableToExcel = async (dataList = [], filename = 'Rekap_Prelist_SE2026.xlsx') => {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'BPS SE2026 Supervisi App';
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet('Rekap Prelist', {
+    views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }] // Freeze header row
+  });
+
+  // Table Columns matching table view
+  worksheet.columns = [
+    { header: 'No', key: 'no', width: 6 },
+    { header: 'Kecamatan', key: 'nmKec', width: 22 },
+    { header: 'Desa / Nagari', key: 'nmDesa', width: 24 },
+    { header: 'Nama SLS / Sub SLS', key: 'nmSubSls', width: 32 },
+    { header: 'Kode Sub SLS', key: 'kdSubSls', width: 20 },
+    { header: 'Petugas', key: 'username', width: 24 },
+    { header: 'Beban', key: 'totBeban', width: 12 },
+    { header: 'Submit', key: 'totSubmit', width: 12 },
+    { header: 'Draft', key: 'totDraft', width: 10 },
+    { header: 'Open', key: 'totOpen', width: 10 },
+    { header: 'Prelist Klg', key: 'prelistKlg', width: 14 },
+    { header: 'Prelist Ush', key: 'prelistUsh', width: 14 },
+    { header: 'Assign Baru', key: 'assignBaru', width: 14 },
+    { header: '% Capaian', key: 'totPct', width: 13 },
+    { header: 'Delta', key: 'deltaJml', width: 11 }
+  ];
+
+  // Style Header Row (Row 1) with #f79039
+  const headerRow = worksheet.getRow(1);
+  headerRow.height = 28;
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF79039' } // Header color #f79039
+    };
+    cell.font = {
+      name: 'Segoe UI',
+      size: 11,
+      bold: true,
+      color: { argb: 'FFFFFFFF' } // White text
+    };
+    cell.alignment = {
+      vertical: 'middle',
+      horizontal: 'center',
+      wrapText: true
+    };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      bottom: { style: 'medium', color: { argb: 'FFDD6B20' } },
+      right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+    };
+  });
+
+  // Enable AutoFilter across all columns
+  worksheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: 15 }
+  };
+
+  // Aggregators for bottom summary row
+  let sumBeban = 0;
+  let sumSubmit = 0;
+  let sumDraft = 0;
+  let sumOpen = 0;
+  let sumKlgSub = 0;
+  let sumKlgTot = 0;
+  let sumUshSub = 0;
+  let sumUshTot = 0;
+  let sumAbSub = 0;
+  let sumAbTot = 0;
+  let sumDelta = 0;
+
+  // Populate data rows
+  dataList.forEach((row, idx) => {
+    const no = idx + 1;
+    const kdSub = String(row.kdSubSls || '');
+    const masterInfo = masterWilayahMap[kdSub] || {};
+
+    const nmKec = row.nmKec || masterInfo.nmKec || '-';
+    const nmDesa = row.nmDesa || masterInfo.nmDesa || '-';
+    const nmSubSls = row.nmSubSls || masterInfo.nmSubSls || '-';
+
+    // Petugas username(s)
+    let username = '-';
+    if (row.usernames && Array.isArray(row.usernames) && row.usernames.length > 0) {
+      username = row.usernames.join(', ');
+    } else if (row.username) {
+      username = String(row.username);
+    }
+
+    const beban = Number(row.totBeban) || 0;
+    const submit = Number(row.totSubmit) || 0;
+    const draft = Number(row.totDraft) || 0;
+    const open = Number(row.totOpen) || 0;
+
+    const klgSub = Number(row.prelistKeluargaSub) || 0;
+    const klgTot = Number(row.prelistKeluargaTot) || 0;
+    const ushSub = Number(row.prelistUsahaSub) || 0;
+    const ushTot = Number(row.prelistUsahaTot) || 0;
+    const abSub = Number(row.totAbSub !== undefined ? row.totAbSub : row.abSub) || 0;
+    const abTot = Number(row.totAbTot !== undefined ? row.totAbTot : row.abTot) || 0;
+
+    sumBeban += beban;
+    sumSubmit += submit;
+    sumDraft += draft;
+    sumOpen += open;
+    sumKlgSub += klgSub;
+    sumKlgTot += klgTot;
+    sumUshSub += ushSub;
+    sumUshTot += ushTot;
+    sumAbSub += abSub;
+    sumAbTot += abTot;
+
+    const delta = Number(row.deltaJml) || 0;
+    sumDelta += delta;
+
+    // Strict string formatting for fractions to prevent Excel parsing into decimals/dates
+    const prelistKlgStr = `${klgSub}/${klgTot}`;
+    const prelistUshStr = `${ushSub}/${ushTot}`;
+    const assignBaruStr = (abTot > 0 || abSub > 0) ? `${abSub}/${abTot}` : '0/0';
+
+    // % Capaian
+    const pctVal = beban > 0 ? (submit / beban) : (row.totPct !== undefined ? Number(row.totPct) : 0);
+    const pctStr = `${Math.round(pctVal * 100)}%`;
+    const deltaStr = delta > 0 ? `+${delta}` : (delta < 0 ? `${delta}` : '0');
+
+    const addedRow = worksheet.addRow({
+      no: no,
+      nmKec: nmKec,
+      nmDesa: nmDesa,
+      nmSubSls: nmSubSls,
+      kdSubSls: kdSub,
+      username: username,
+      totBeban: beban,
+      totSubmit: submit,
+      totDraft: draft,
+      totOpen: open,
+      prelistKlg: prelistKlgStr,
+      prelistUsh: prelistUshStr,
+      assignBaru: assignBaruStr,
+      totPct: pctStr,
+      deltaJml: deltaStr
+    });
+
+    addedRow.height = 22;
+
+    const isOdd = idx % 2 === 1;
+    const rowBgColor = isOdd ? 'FFFDFBF7' : 'FFFFFFFF';
+
+    addedRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      // Cell borders
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+        right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
+      };
+
+      // Background fill
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: rowBgColor }
+      };
+
+      cell.font = {
+        name: 'Segoe UI',
+        size: 10
+      };
+
+      // Alignment and strict formatting rules
+      // 1: No
+      if (colNumber === 1) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      }
+      // 2: Kecamatan, 3: Desa, 4: Nama SLS, 6: Petugas
+      else if (colNumber === 2 || colNumber === 3 || colNumber === 4 || colNumber === 6) {
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+      }
+      // 5: Kode Sub SLS (Strict String to preserve 16-digit code without exponential notation)
+      else if (colNumber === 5) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.numFmt = '@';
+        cell.value = String(kdSub);
+      }
+      // 7: Beban, 8: Submit (Integer Numbers)
+      else if (colNumber === 7 || colNumber === 8) {
+        cell.alignment = { vertical: 'middle', horizontal: 'right' };
+        cell.numFmt = '#,##0';
+        if (colNumber === 8) {
+          cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF15803D' } }; // green text for submit
+        }
+      }
+      // 9: Draft, 10: Open (Integer Numbers)
+      else if (colNumber === 9 || colNumber === 10) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.numFmt = '#,##0';
+        if (colNumber === 9 && draft > 0) {
+          cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFD97706' } }; // amber text for draft
+        } else if (colNumber === 10 && open > 0) {
+          cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF0284C7' } }; // blue text for open
+        }
+      }
+      // 11: Prelist Klg, 12: Prelist Ush, 13: Assign Baru (Strict Strings for fractions)
+      else if (colNumber === 11 || colNumber === 12 || colNumber === 13) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.numFmt = '@'; // Force text format
+        cell.value = String(cell.value || '');
+      }
+      // 14: % Capaian
+      else if (colNumber === 14) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.font = { name: 'Segoe UI', size: 10, bold: true };
+      }
+      // 15: Delta
+      else if (colNumber === 15) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        if (delta > 0) {
+          cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF15803D' } };
+        } else if (delta < 0) {
+          cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFDC2626' } };
+        }
+      }
+    });
+  });
+
+  // Summary / Total Row at the bottom
+  if (dataList.length > 0) {
+    const totalPct = sumBeban > 0 ? `${Math.round((sumSubmit / sumBeban) * 100)}%` : '0%';
+    const totalKlgStr = `${sumKlgSub}/${sumKlgTot}`;
+    const totalUshStr = `${sumUshSub}/${sumUshTot}`;
+    const totalAbStr = `${sumAbSub}/${sumAbTot}`;
+    const totalDeltaStr = sumDelta > 0 ? `+${sumDelta}` : `${sumDelta}`;
+
+    const totalRow = worksheet.addRow({
+      no: '',
+      nmKec: 'TOTAL',
+      nmDesa: '',
+      nmSubSls: `${dataList.length} Sub SLS`,
+      kdSubSls: '',
+      username: '',
+      totBeban: sumBeban,
+      totSubmit: sumSubmit,
+      totDraft: sumDraft,
+      totOpen: sumOpen,
+      prelistKlg: totalKlgStr,
+      prelistUsh: totalUshStr,
+      assignBaru: totalAbStr,
+      totPct: totalPct,
+      deltaJml: totalDeltaStr
+    });
+
+    totalRow.height = 26;
+
+    totalRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFFEEBC8' } // Soft orange-yellow theme
+      };
+      cell.font = {
+        name: 'Segoe UI',
+        size: 10,
+        bold: true,
+        color: { argb: 'FF7C2D12' }
+      };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FFF79039' } },
+        bottom: { style: 'double', color: { argb: 'FFF79039' } },
+        left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+        right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+      };
+
+      if (colNumber === 2) {
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+      } else if (colNumber === 7 || colNumber === 8) {
+        cell.alignment = { vertical: 'middle', horizontal: 'right' };
+        cell.numFmt = '#,##0';
+      } else {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        if (colNumber === 11 || colNumber === 12 || colNumber === 13) {
+          cell.numFmt = '@';
+          cell.value = String(cell.value || '');
+        }
+      }
+    });
+  }
+
+  // Trigger browser download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  });
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  window.URL.revokeObjectURL(url);
 };
 
+// Alias exportToExcel to exportPrelistTableToExcel for seamless compatibility
+export const exportToExcel = exportPrelistTableToExcel;
+
 export const parsePrelistExcel = parseSingleExcel;
+

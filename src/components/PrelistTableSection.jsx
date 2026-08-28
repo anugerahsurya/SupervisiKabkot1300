@@ -329,8 +329,8 @@ function compareFractionDeficit(subA, totA, subB, totB) {
   // Export current filtered table
   const handleExportFiltered = () => {
     exportToExcel(
-      filteredData, 
-      `Rekap_Prelist_${kodeKab}_${new Date().toISOString().slice(0, 10)}.xlsx`
+      sortedData, 
+      `Rekap_Prelist_${kodeKab}_Filtered_${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };
 

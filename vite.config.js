@@ -20,6 +20,9 @@ export default defineConfig({
           if (id.includes('node_modules/xlsx')) {
             return 'vendor-xlsx';
           }
+          if (id.includes('node_modules/exceljs')) {
+            return 'vendor-exceljs';
+          }
           if (id.includes('node_modules/lucide-react')) {
             return 'vendor-icons';
           }
