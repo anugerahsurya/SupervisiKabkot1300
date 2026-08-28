@@ -106,19 +106,22 @@ export default function PrelistTableSection({
     let cDraft = 0;
     let cOpen = 0;
     let cLt90 = 0;
+    let cAB = 0;
 
     normalizedData.forEach(d => {
       const pct = (d.totPct !== undefined && d.totPct !== null) ? Number(d.totPct) * 100 : 0;
       const draft = Number(d.totDraft || 0);
       const open = Number(d.totOpen || 0);
+      const abTot = Number(d.totAbTot || d.abTot || 0);
 
       if (pct >= 100) c100++;
       if (draft > 0) cDraft++;
       if (open > 0) cOpen++;
       if (pct < 90) cLt90++;
+      if (abTot > 0) cAB++;
     });
 
-    return { cAll, c100, cDraft, cOpen, cLt90 };
+    return { cAll, c100, cDraft, cOpen, cLt90, cAB };
   }, [normalizedData]);
 
   // 3. Filter data
@@ -146,10 +149,12 @@ export default function PrelistTableSection({
       const pct = (item.totPct || 0) * 100;
       const draft = Number(item.totDraft || 0);
       const open = Number(item.totOpen || 0);
+      const abTot = Number(item.totAbTot || item.abTot || 0);
 
       if (statusFilter === '100' && pct < 100) return false;
       if (statusFilter === 'DRAFT' && draft === 0) return false;
       if (statusFilter === 'OPEN' && open === 0) return false;
+      if (statusFilter === 'AB' && abTot === 0) return false;
       if (statusFilter === '90-99' && (pct < 90 || pct >= 100)) return false;
       if (statusFilter === 'LT90' && pct >= 90) return false;
       if (statusFilter === '75-89' && (pct < 75 || pct >= 90)) return false;
@@ -437,6 +442,14 @@ export default function PrelistTableSection({
           </button>
           <button 
             type="button" 
+            className={`status-filter-pill ${statusFilter === 'AB' ? 'active' : ''}`}
+            onClick={() => { setStatusFilter('AB'); setCurrentPage(1); }}
+            title="Tampilkan hanya Sub SLS yang memiliki Assignment Baru (AB)"
+          >
+            Ada Assign Baru ({statusCounts.cAB})
+          </button>
+          <button 
+            type="button" 
             className={`status-filter-pill ${statusFilter === 'LT90' ? 'active' : ''}`}
             onClick={() => { setStatusFilter('LT90'); setCurrentPage(1); }}
           >
@@ -547,6 +560,12 @@ export default function PrelistTableSection({
                   {renderSortIcon('prelistUsahaSub')}
                 </div>
               </th>
+              <th onClick={() => handleSort('totAbTot')} className="sortable-th text-center" title="Urutkan berdasarkan Total Assignment Baru (Beban / Submit)">
+                <div className="th-content justify-center">
+                  <span>Assign Baru</span>
+                  {renderSortIcon('totAbTot')}
+                </div>
+              </th>
               <th onClick={() => handleSort('totPct')} className="sortable-th text-center" title="Urutkan berdasarkan Persentase Capaian">
                 <div className="th-content justify-center">
                   <span>% Capaian</span>
@@ -568,6 +587,8 @@ export default function PrelistTableSection({
                 const globalIdx = (currentPage - 1) * PAGE_SIZE + idx + 1;
                 const draft = Number(row.totDraft || 0);
                 const open = Number(row.totOpen || 0);
+                const abTot = Number(row.totAbTot || row.abTot || 0);
+                const abSub = Number(row.totAbSub || row.abSub || 0);
 
                 return (
                   <tr key={row.kdSubSls || globalIdx} className="table-data-row">
@@ -630,6 +651,17 @@ export default function PrelistTableSection({
                       </div>
                     </td>
                     <td className="text-center">
+                      {abTot > 0 ? (
+                        <div className="fraction-cell ab-fraction-cell" title={`Assignment Baru: ${abSub} submit dari ${abTot} beban`}>
+                          <span className="fraction-sub font-semibold" style={{ color: '#7c3aed' }}>{abSub}</span>
+                          <span className="fraction-div">/</span>
+                          <span className="fraction-tot font-bold">{abTot}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted font-sm">-</span>
+                      )}
+                    </td>
+                    <td className="text-center">
                       {renderCapaianBadge(row.totPct)}
                     </td>
                     <td className="text-center">
@@ -656,7 +688,7 @@ export default function PrelistTableSection({
               })
             ) : (
               <tr>
-                <td colSpan="14" className="empty-table-cell">
+                <td colSpan="15" className="empty-table-cell">
                   <div className="empty-table-state">
                     <AlertCircle size={32} className="text-muted" />
                     <p className="empty-text">Tidak ada data Sub SLS yang sesuai dengan kriteria filter atau pencarian.</p>
