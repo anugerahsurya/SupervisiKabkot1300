@@ -252,7 +252,7 @@ export default function SubSlsDetailModal({ data, onClose }) {
           <div className="detail-section">
             <h4 className="detail-section-title">
               <FileSpreadsheet size={15} className="text-primary" />
-              <span>1. Rincian Prelist Awal (Submit, Draft & Open)</span>
+              <span>1. Rincian Prelist Awal (Beban, Submit & Sisa Belum Selesai)</span>
             </h4>
 
             <div className="detail-table-wrap">
@@ -262,8 +262,7 @@ export default function SubSlsDetailModal({ data, onClose }) {
                     <th>Rincian Kategori</th>
                     <th className="text-center">Total Beban</th>
                     <th className="text-center text-success">Sudah Submit</th>
-                    <th className="text-center text-warning">Draft</th>
-                    <th className="text-center text-info">Open</th>
+                    <th className="text-center text-warning">Sisa Belum Submit</th>
                     <th className="text-center">% Capaian</th>
                   </tr>
                 </thead>
@@ -272,45 +271,68 @@ export default function SubSlsDetailModal({ data, onClose }) {
                     <td>Prelist Keluarga</td>
                     <td className="text-center font-medium">{plKlgTot}</td>
                     <td className="text-center text-success font-semibold">{plKlgSub}</td>
-                    <td className="text-center text-muted font-sm">-</td>
-                    <td className="text-center text-muted font-sm">-</td>
-                    <td className="text-center">{Math.round((data.prelistKeluargaPct || 0) * 100)}%</td>
+                    <td className="text-center font-medium">
+                      {plKlgTot - plKlgSub > 0 ? (
+                        <span className="text-warning font-semibold">{plKlgTot - plKlgSub}</span>
+                      ) : (
+                        <span className="text-muted font-sm">0</span>
+                      )}
+                    </td>
+                    <td className="text-center font-semibold">{Math.round((data.prelistKeluargaPct || 0) * 100)}%</td>
                   </tr>
                   <tr>
                     <td>Prelist Usaha</td>
                     <td className="text-center font-medium">{plUshTot}</td>
                     <td className="text-center text-success font-semibold">{plUshSub}</td>
-                    <td className="text-center text-muted font-sm">-</td>
-                    <td className="text-center text-muted font-sm">-</td>
-                    <td className="text-center">{Math.round((data.prelistUsahaPct || 0) * 100)}%</td>
+                    <td className="text-center font-medium">
+                      {plUshTot - plUshSub > 0 ? (
+                        <span className="text-warning font-semibold">{plUshTot - plUshSub}</span>
+                      ) : (
+                        <span className="text-muted font-sm">0</span>
+                      )}
+                    </td>
+                    <td className="text-center font-semibold">{Math.round((data.prelistUsahaPct || 0) * 100)}%</td>
                   </tr>
                   <tr>
                     <td>Prelist Non BKU</td>
                     <td className="text-center font-medium">{plNonBkuTot}</td>
                     <td className="text-center text-success font-semibold">{plNonBkuSub}</td>
-                    <td className="text-center text-muted font-sm">-</td>
-                    <td className="text-center text-muted font-sm">-</td>
-                    <td className="text-center">{Math.round((data.prelistNonBkuPct || 0) * 100)}%</td>
+                    <td className="text-center font-medium">
+                      {plNonBkuTot - plNonBkuSub > 0 ? (
+                        <span className="text-warning font-semibold">{plNonBkuTot - plNonBkuSub}</span>
+                      ) : (
+                        <span className="text-muted font-sm">0</span>
+                      )}
+                    </td>
+                    <td className="text-center font-semibold">{Math.round((data.prelistNonBkuPct || 0) * 100)}%</td>
                   </tr>
                   <tr className="subtotal-row">
                     <td><strong>Total Prelist Awal</strong></td>
                     <td className="text-center font-bold">{plTotTot}</td>
                     <td className="text-center font-bold text-success">{plTotSub}</td>
-                    <td className="text-center font-bold">
-                      <span className={`status-tag ${plDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                        {plDraft}
-                      </span>
-                    </td>
-                    <td className="text-center font-bold">
-                      <span className={`status-tag ${plOpen > 0 ? 'tag-info' : 'tag-done'}`}>
-                        {plOpen}
-                      </span>
-                    </td>
+                    <td className="text-center font-bold text-warning">{plDraft + plOpen}</td>
                     <td className="text-center font-bold">{Math.round((data.totPrelistPct || 0) * 100)}%</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+
+            {/* Status Breakdown Bar: Draft vs Open */}
+            {(plDraft > 0 || plOpen > 0) && (
+              <div className="prelist-status-banner">
+                <span className="text-muted font-sm">Rincian status sisa prelist ({plDraft + plOpen} unit):</span>
+                {plDraft > 0 && (
+                  <span className="status-tag tag-warning">
+                    <strong>{plDraft}</strong> Draft (Sedang Dikerjakan)
+                  </span>
+                )}
+                {plOpen > 0 && (
+                  <span className="status-tag tag-info">
+                    <strong>{plOpen}</strong> Open (Belum Dimulai)
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Kategori 2 & 3: Ground Check (GL) & Assignment Baru */}
@@ -365,49 +387,41 @@ export default function SubSlsDetailModal({ data, onClose }) {
                       <th>Kategori</th>
                       <th className="text-center">Beban</th>
                       <th className="text-center text-success">Submit</th>
-                      <th className="text-center text-warning">Draft</th>
-                      <th className="text-center text-info">Open</th>
+                      <th className="text-center text-warning">Sisa</th>
+                      <th className="text-center">%</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
                       <td>AB Keluarga</td>
-                      <td className="text-center">{abKlgSub > 0 ? abKlgSub : abKlgTot}</td>
+                      <td className="text-center font-medium">{abKlgSub > 0 ? abKlgSub : abKlgTot}</td>
                       <td className="text-center text-success font-semibold">{abKlgSub}</td>
-                      <td className="text-center text-muted font-sm">-</td>
-                      <td className="text-center text-muted font-sm">-</td>
+                      <td className="text-center font-medium">0</td>
+                      <td className="text-center font-semibold">{abKlgTot > 0 ? Math.round((abKlgSub / abKlgTot) * 100) : 100}%</td>
                     </tr>
                     <tr>
                       <td>AB Usaha</td>
-                      <td className="text-center">{abUshSub > 0 ? abUshSub : abUshTot}</td>
+                      <td className="text-center font-medium">{abUshSub > 0 ? abUshSub : abUshTot}</td>
                       <td className="text-center text-success font-semibold">{abUshSub}</td>
-                      <td className="text-center text-muted font-sm">-</td>
-                      <td className="text-center text-muted font-sm">-</td>
+                      <td className="text-center font-medium">0</td>
+                      <td className="text-center font-semibold">{abUshTot > 0 ? Math.round((abUshSub / abUshTot) * 100) : 100}%</td>
                     </tr>
                     <tr>
                       <td>AB Non BKU</td>
-                      <td className="text-center">{abNonBkuSub > 0 ? abNonBkuSub : abNonBkuTot}</td>
+                      <td className="text-center font-medium">{abNonBkuSub > 0 ? abNonBkuSub : abNonBkuTot}</td>
                       <td className="text-center text-success font-semibold">{abNonBkuSub}</td>
-                      <td className="text-center text-muted font-sm">-</td>
-                      <td className="text-center text-muted font-sm">-</td>
+                      <td className="text-center font-medium">0</td>
+                      <td className="text-center font-semibold">{abNonBkuTot > 0 ? Math.round((abNonBkuSub / abNonBkuTot) * 100) : 100}%</td>
                     </tr>
 
                     {/* Baris AB yang Belum Selesai (Draft / Open) */}
                     {(abDraft > 0 || abOpen > 0) && (
                       <tr style={{ backgroundColor: 'rgba(245, 158, 11, 0.06)' }}>
-                        <td className="text-warning font-medium">AB Belum Selesai (Draft / Open)</td>
+                        <td className="text-warning font-medium">AB Belum Selesai</td>
                         <td className="text-center font-bold text-warning">{abDraft + abOpen}</td>
-                        <td className="text-center text-muted font-sm">-</td>
-                        <td className="text-center font-bold">
-                          <span className={`status-tag ${abDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                            {abDraft}
-                          </span>
-                        </td>
-                        <td className="text-center font-bold">
-                          <span className={`status-tag ${abOpen > 0 ? 'tag-info' : 'tag-done'}`}>
-                            {abOpen}
-                          </span>
-                        </td>
+                        <td className="text-center text-muted font-sm">0</td>
+                        <td className="text-center font-bold text-warning">{abDraft + abOpen}</td>
+                        <td className="text-center font-bold text-warning">0%</td>
                       </tr>
                     )}
 
@@ -415,20 +429,29 @@ export default function SubSlsDetailModal({ data, onClose }) {
                       <td><strong>Total AB</strong></td>
                       <td className="text-center font-bold">{abTotTot}</td>
                       <td className="text-center font-bold text-success">{abTotSub}</td>
-                      <td className="text-center font-bold">
-                        <span className={`status-tag ${abDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
-                          {abDraft}
-                        </span>
-                      </td>
-                      <td className="text-center font-bold">
-                        <span className={`status-tag ${abOpen > 0 ? 'tag-info' : 'tag-done'}`}>
-                          {abOpen}
-                        </span>
-                      </td>
+                      <td className="text-center font-bold text-warning">{abDraft + abOpen}</td>
+                      <td className="text-center font-bold">{abTotTot > 0 ? Math.round((abTotSub / abTotTot) * 100) : 100}%</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
+
+              {/* Status Breakdown Bar for AB */}
+              {(abDraft > 0 || abOpen > 0) && (
+                <div className="prelist-status-banner">
+                  <span className="text-muted font-sm">Rincian status sisa AB ({abDraft + abOpen} unit):</span>
+                  {abDraft > 0 && (
+                    <span className="status-tag tag-warning">
+                      <strong>{abDraft}</strong> Draft
+                    </span>
+                  )}
+                  {abOpen > 0 && (
+                    <span className="status-tag tag-info">
+                      <strong>{abOpen}</strong> Open
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
