@@ -372,25 +372,45 @@ export default function SubSlsDetailModal({ data, onClose }) {
                   <tbody>
                     <tr>
                       <td>AB Keluarga</td>
-                      <td className="text-center">{abKlgTot}</td>
+                      <td className="text-center">{abKlgSub > 0 ? abKlgSub : abKlgTot}</td>
                       <td className="text-center text-success font-semibold">{abKlgSub}</td>
                       <td className="text-center text-muted font-sm">-</td>
                       <td className="text-center text-muted font-sm">-</td>
                     </tr>
                     <tr>
                       <td>AB Usaha</td>
-                      <td className="text-center">{abUshTot}</td>
+                      <td className="text-center">{abUshSub > 0 ? abUshSub : abUshTot}</td>
                       <td className="text-center text-success font-semibold">{abUshSub}</td>
                       <td className="text-center text-muted font-sm">-</td>
                       <td className="text-center text-muted font-sm">-</td>
                     </tr>
                     <tr>
                       <td>AB Non BKU</td>
-                      <td className="text-center">{abNonBkuTot}</td>
+                      <td className="text-center">{abNonBkuSub > 0 ? abNonBkuSub : abNonBkuTot}</td>
                       <td className="text-center text-success font-semibold">{abNonBkuSub}</td>
                       <td className="text-center text-muted font-sm">-</td>
                       <td className="text-center text-muted font-sm">-</td>
                     </tr>
+
+                    {/* Baris AB yang Belum Selesai (Draft / Open) */}
+                    {(abDraft > 0 || abOpen > 0) && (
+                      <tr style={{ backgroundColor: 'rgba(245, 158, 11, 0.06)' }}>
+                        <td className="text-warning font-medium">AB Belum Selesai (Draft / Open)</td>
+                        <td className="text-center font-bold text-warning">{abDraft + abOpen}</td>
+                        <td className="text-center text-muted font-sm">-</td>
+                        <td className="text-center font-bold">
+                          <span className={`status-tag ${abDraft > 0 ? 'tag-warning' : 'tag-done'}`}>
+                            {abDraft}
+                          </span>
+                        </td>
+                        <td className="text-center font-bold">
+                          <span className={`status-tag ${abOpen > 0 ? 'tag-info' : 'tag-done'}`}>
+                            {abOpen}
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+
                     <tr className="subtotal-row">
                       <td><strong>Total AB</strong></td>
                       <td className="text-center font-bold">{abTotTot}</td>
