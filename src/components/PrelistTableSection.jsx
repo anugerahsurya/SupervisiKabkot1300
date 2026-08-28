@@ -164,19 +164,79 @@ export default function PrelistTableSection({
     });
   }, [prelistData, searchTerm, selectedKec, selectedDesa, statusFilter]);
 
+// Helper for sorting fractional progress (e.g. 0/50 before 0/20, before 1/40, with 0/0 last)
+function compareFractionDeficit(subA, totA, subB, totB) {
+  const isDoneA = (totA === 0 || subA >= totA);
+  const isDoneB = (totB === 0 || subB >= totB);
+
+  // If one is completed (or 0/0) and the other is incomplete, prioritize incomplete
+  if (isDoneA && !isDoneB) return 1;
+  if (!isDoneA && isDoneB) return -1;
+  if (isDoneA && isDoneB) {
+    return totB - totA;
+  }
+
+  // Both have deficit:
+  // 1. Prioritize lower completion percentage first (0% before 2.5%, etc.)
+  const pctA = subA / totA;
+  const pctB = subB / totB;
+
+  if (Math.abs(pctA - pctB) > 0.0001) {
+    return pctA - pctB;
+  }
+
+  // 2. If same percentage (e.g. both 0%, like 0/50 vs 0/20):
+  // Prioritize larger shortage/deficit first (50 before 20)
+  const shortageA = totA - subA;
+  const shortageB = totB - subB;
+
+  if (shortageA !== shortageB) {
+    return shortageB - shortageA;
+  }
+
+  // 3. Fallback by total beban descending
+  return totB - totA;
+}
+
   // 4. Sort data
   const sortedData = useMemo(() => {
     if (!sortField) return filteredData;
     return [...filteredData].sort((a, b) => {
+      // Custom Fractional Deficit Sorting for Prelist Klg, Prelist Ush, and Assign Baru
+      if (sortField === 'prelistKeluargaSub' || sortField === 'prelistKeluargaTot') {
+        const subA = Number(a.prelistKeluargaSub || 0);
+        const totA = Number(a.prelistKeluargaTot || 0);
+        const subB = Number(b.prelistKeluargaSub || 0);
+        const totB = Number(b.prelistKeluargaTot || 0);
+        const res = compareFractionDeficit(subA, totA, subB, totB);
+        return sortDir === 'asc' ? res : -res;
+      }
+
+      if (sortField === 'prelistUsahaSub' || sortField === 'prelistUsahaTot') {
+        const subA = Number(a.prelistUsahaSub || 0);
+        const totA = Number(a.prelistUsahaTot || 0);
+        const subB = Number(b.prelistUsahaSub || 0);
+        const totB = Number(b.prelistUsahaTot || 0);
+        const res = compareFractionDeficit(subA, totA, subB, totB);
+        return sortDir === 'asc' ? res : -res;
+      }
+
+      if (sortField === 'totAbTot' || sortField === 'totAbSub') {
+        const subA = Number(a.totAbSub || a.abSub || 0);
+        const totA = Number(a.totAbTot || a.abTot || 0);
+        const subB = Number(b.totAbSub || b.abSub || 0);
+        const totB = Number(b.totAbTot || b.abTot || 0);
+        const res = compareFractionDeficit(subA, totA, subB, totB);
+        return sortDir === 'asc' ? res : -res;
+      }
+
       let aVal = a[sortField];
       let bVal = b[sortField];
 
       // Numeric comparison if either value is number or numeric field
       const isNumericField = [
-        'prelistKeluargaTot', 'prelistKeluargaSub', 'prelistKeluargaPct',
-        'prelistUsahaTot', 'prelistUsahaSub', 'prelistUsahaPct',
         'totPrelistTot', 'totPrelistSub', 'totPrelistPct', 'prelistOpen', 'prelistDraft', 'prelistOpenDraft',
-        'totAbTot', 'totAbSub', 'totAbPct', 'abOpen', 'abDraft', 'abOpenDraft',
+        'totAbPct', 'abOpen', 'abDraft', 'abOpenDraft',
         'totBeban', 'totSubmit', 'totDraft', 'totOpen', 'totOpenDraft', 'totPct', 'deltaJml', 'deltaPct'
       ].includes(sortField);
 
